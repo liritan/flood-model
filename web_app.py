@@ -164,21 +164,90 @@ with tab3:
         radar = RadarDiagram()
         data_sol = st.session_state.data_sol
         labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
+        n = len(data_sol)
         
+        # Вычисляем индексы для промежуточных состояний
+        indices = {
+            'Начальный момент': 0,
+            '1/8 времени': n // 8,
+            '1/4 времени': n // 4, 
+            '3/8 времени': 3 * n // 8,
+            '1/2 времени': n // 2,
+            '5/8 времени': 5 * n // 8,
+            '3/4 времени': 3 * n // 4,
+            '7/8 времени': 7 * n // 8,
+            'Конечный момент': n - 1
+        }
+        
+        st.subheader("📊 Все состояния системы")
+        
+        # Создаем диаграмму со всеми состояниями
+        all_data = [data_sol[idx] for idx in indices.values()]
+        fig_all = radar.draw(all_data, labels, "Динамика системы во времени")
+        st.pyplot(fig_all)
+        
+        st.subheader("🔍 Детальный анализ по состояниям")
+        
+        # Показываем отдельные диаграммы для ключевых моментов
+        key_moments = {
+            'Начальный момент': 0,
+            '1/4 времени': n // 4,
+            '1/2 времени': n // 2,
+            '3/4 времени': 3 * n // 4,
+            'Конечный момент': n - 1
+        }
+        
+        cols = st.columns(3)
+        col_idx = 0
+        
+        for moment_name, idx in key_moments.items():
+            with cols[col_idx]:
+                st.write(f"**{moment_name}**")
+                fig_moment = radar.draw([data_sol[idx]], labels, f"t = {idx}/{n}")
+                st.pyplot(fig_moment)
+                
+                # Показываем значения параметров
+                with st.expander("Значения параметров"):
+                    for i, value in enumerate(data_sol[idx]):
+                        st.write(f"{labels[i]}: {value:.3f}")
+            
+            col_idx = (col_idx + 1) % 3
+            
+        st.subheader("📈 Сравнительный анализ")
+        
+        # Сравнение начального и конечного состояния
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("Начальное состояние")
-            fig_initial = radar.draw([data_sol[0]], labels, "Начальные значения параметров")
-            st.pyplot(fig_initial)
+            st.write("**Начальное vs Конечное состояние**")
+            fig_comparison = radar.draw([data_sol[0], data_sol[-1]], labels, 
+                                      "Сравнение начального и конечного состояния")
+            st.pyplot(fig_comparison)
             
         with col2:
-            st.subheader("Конечное состояние")
-            fig_final = radar.draw([data_sol[-1]], labels, "Конечные значения параметров")
-            st.pyplot(fig_final)
+            st.write("**Изменения параметров**")
+            changes = data_sol[-1] - data_sol[0]
+            
+            # График изменений
+            fig_changes, ax = plt.subplots(figsize=(10, 6))
+            bars = ax.bar(range(14), changes, color=['red' if x < 0 else 'green' for x in changes])
+            ax.set_xlabel('Параметры')
+            ax.set_ylabel('Изменение')
+            ax.set_title('Изменение параметров от начального до конечного состояния')
+            ax.set_xticks(range(14))
+            ax.set_xticklabels([f'Z{i+1}' for i in range(14)], rotation=45)
+            ax.grid(True, alpha=0.3)
+            
+            # Добавляем значения на столбцы
+            for bar, change in zip(bars, changes):
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                       f'{change:+.3f}', ha='center', va='bottom' if height >= 0 else 'top')
+            
+            st.pyplot(fig_changes)
             
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры'")
+        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
 
 with tab4:
     st.header("Графики функций системы")
