@@ -1,78 +1,124 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, RegularPolygon
+from matplotlib.path import Path
+from matplotlib.projections.polar import PolarAxes
+from matplotlib.projections import register_projection
+from matplotlib.spines import Spine
+from matplotlib.transforms import Affine2D
 
-class RadarDiagram:
+
+class RadarDiagram():
+    def radar_factory(self, num_vars, frame='circle'):
+        theta = np.linspace(0, 2 * np.pi, num_vars, endpoint=False)
+
+        class RadarAxes(PolarAxes):
+            name = 'radar'
+            RESOLUTION = 1
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.set_theta_zero_location('N')
+
+            def fill(self, *args, closed=True, **kwargs):
+                return super().fill(closed=closed, *args, **kwargs)
+
+            def plot(self, *args, **kwargs):
+                lines = super().plot(*args, **kwargs)
+                for line in lines:
+                    self._close_line(line)
+
+            def _close_line(self, line):
+                x, y = line.get_data()
+                if x[0] != x[-1]:
+                    x = np.append(x, x[0])
+                    y = np.append(y, y[0])
+                    line.set_data(x, y)
+
+            def set_varlabels(self, labels):
+                self.set_thetagrids(np.degrees(theta), labels)
+
+            def _gen_axes_patch(self):
+                if frame == 'circle':
+                    return Circle((0.5, 0.5), 0.5)
+                elif frame == 'polygon':
+                    return RegularPolygon((0.5, 0.5), num_vars, radius=.5, edgecolor="k")
+                else:
+                    raise ValueError("Unknown value for 'frame': %s" % frame)
+
+            def _gen_axes_spines(self):
+                if frame == 'circle':
+                    return super()._gen_axes_spines()
+                elif frame == 'polygon':
+                    spine = Spine(axes=self, spine_type='circle',
+                                path=Path.unit_regular_polygon(num_vars))
+                    spine.set_transform(Affine2D().scale(.5).translate(.5, .5) + self.transAxes)
+                    return {'polar': spine}
+                else:
+                    raise ValueError("Unknown value for 'frame': %s" % frame)
+
+        register_projection(RadarAxes)
+        return theta
+
     def draw(self, data, labels, title):
-        """
-        Создание радар-диаграммы
+        N = len(labels)
+        theta = self.radar_factory(N, frame='polygon')
+
+        spoke_labels = labels
+
+        fig, axs = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='radar'))
+        fig.subplots_adjust(wspace=1, hspace=1, top=0.85, bottom=0.05)
+
+        colors = ['b', 'r', 'g', 'orange', 'purple', 'brown', 'pink']
         
-        Parameters:
-        data - список массивов данных (каждый массив должен иметь длину как labels)
-        labels - список меток параметров
-        title - заголовок диаграммы
-        """
-        try:
-            N = len(labels)
-            theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
+        # Масштабирование 
+        all_data = np.concatenate(data)
+        min_val = np.min(all_data)
+        max_val = np.max(all_data)
+        
+        # Сетка значений
+        if max_val - min_val > 0:
+            grid_values = [min_val, (min_val + max_val)/2, max_val*0.75, max_val]
+        else:
+            grid_values = [0, 0.25, 0.5, 0.75, 1.0]
             
-            fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
-            
-            # Цвета для разных состояний
-            colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive']
-            
-            for idx, dataset in enumerate(data):
-                # Преобразуем в numpy array и убеждаемся в правильной длине
-                dataset_array = np.array(dataset)
+        axs.set_rgrids(grid_values)
+
+        for ind, dataset in enumerate(data):
+            # Убеждаемся что данные имеют правильную длину
+            if len(dataset) != N:
+                if len(dataset) > N:
+                    plot_data = dataset[:N]
+                else:
+                    plot_data = np.pad(dataset, (0, N - len(dataset)), 'constant')
+            else:
+                plot_data = dataset
                 
-                # Если данных меньше чем меток, дополняем нулями
-                if len(dataset_array) < N:
-                    dataset_array = np.pad(dataset_array, (0, N - len(dataset_array)), 'constant')
-                # Если данных больше, обрезаем
-                elif len(dataset_array) > N:
-                    dataset_array = dataset_array[:N]
-                
-                # Замыкаем полигон (добавляем первый элемент в конец)
-                values = np.concatenate([dataset_array, [dataset_array[0]]])
-                current_theta = np.concatenate([theta, [theta[0]]])
-                
-                # Проверяем что длины совпадают
-                if len(current_theta) != len(values):
-                    st.error(f"Ошибка размеров: theta={len(current_theta)}, values={len(values)}")
-                    continue
-                
-                color = colors[idx % len(colors)]
-                label = f'Состояние {idx+1}' if len(data) > 1 else 'Текущее состояние'
-                
-                ax.plot(current_theta, values, 'o-', linewidth=2, label=label, color=color, markersize=4)
-                ax.fill(current_theta, values, alpha=0.1, color=color)
+            axs.plot(theta, plot_data, color=colors[ind % len(colors)], linewidth=2)
+            axs.fill(theta, plot_data, color=colors[ind % len(colors)], alpha=0.1)
             
-            # Настройка осей и меток
-            ax.set_xticks(theta)
-            ax.set_xticklabels(labels)
-            ax.set_title(title, size=14, weight='bold')
-            ax.grid(True)
+        axs.set_varlabels(spoke_labels)
+
+        # Легенда в зависимости от количества данных
+        if len(data) == 1:
+            legend_labels = ['Текущее состояние']
+        elif len(data) == 2:
+            legend_labels = ['Начальное состояние', 'Конечное состояние']
+        elif len(data) == 5:
+            legend_labels = [
+                'Начальный момент', 
+                '1/4 времени', 
+                '1/2 времени', 
+                '3/4 времени', 
+                'Конечный момент'
+            ]
+        else:
+            legend_labels = [f'Состояние {i+1}' for i in range(len(data))]
             
-            # Добавляем легенду если несколько состояний
-            if len(data) > 1:
-                ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0))
-            
-            # Настраиваем пределы
-            try:
-                all_values = np.concatenate([np.array(d)[:N] for d in data])
-                max_val = np.max(all_values)
-                min_val = np.min(all_values)
-                margin = (max_val - min_val) * 0.1
-                ax.set_ylim(max(0, min_val - margin), max_val + margin)
-            except:
-                ax.set_ylim(0, 1)
-            
-            plt.tight_layout()
-            return fig
-            
-        except Exception as e:
-            # Создаем простую диаграмму в случае ошибки
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.text(0.5, 0.5, f'Ошибка построения диаграммы:\n{str(e)}', 
-                   ha='center', va='center', transform=ax.transAxes)
-            ax.set_title(title)
-            return fig
+        axs.legend(legend_labels, loc=(-0.2, 0.9), labelspacing=0.1, fontsize='medium')
+
+        # Заголовок 
+        fig.text(0.5, 0.95, title, horizontalalignment='center', 
+                color='black', weight='bold', size='large')
+
+        return fig

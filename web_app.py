@@ -169,116 +169,94 @@ with tab2:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры'")
 
 with tab3:
-    st.header("Радар-диаграммы параметров")
+    st.header("🎯 Радар-диаграммы в разные моменты времени")
     
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
         radar = RadarDiagram()
         data_sol = st.session_state.data_sol
         n = len(data_sol)
+        t = st.session_state.t
         
-        # Простые метки
-        simple_labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
+        # Сокращенные метки для лучшего отображения
+        short_labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         
-        # Определяем индексы для нужных моментов времени
+        st.subheader("📊 Сравнение всех состояний системы")
+        
+        # Определяем конкретные моменты времени
         moments = [
             ("Начальный момент", 0),
-            ("1/4 времени", max(1, n // 4)),
-            ("1/2 времени", max(1, n // 2)),
-            ("3/4 времени", max(1, 3 * n // 4)),
-            ("Конечный момент", max(1, n - 1))
+            ("1/4 времени", n // 4),
+            ("1/2 времени", n // 2),
+            ("3/4 времени", 3 * n // 4),
+            ("Конечный момент", n - 1)
         ]
         
-        # Собираем данные только для существующих индексов
-        valid_moments = []
+        # Собираем данные для каждого момента
         moment_data = []
         
         for name, idx in moments:
             if idx < len(data_sol):
-                valid_moments.append(name)
                 moment_data.append(data_sol[idx])
         
-        st.subheader("📊 Сравнение всех состояний")
-        
+        # Основная диаграмма со всеми состояниями
         if len(moment_data) > 0:
-            # Основная диаграмма со всеми состояниями
-            fig_all = radar.draw(moment_data, simple_labels, "Динамика системы во времени")
-            st.pyplot(fig_all)
+            fig_comparison = radar.draw(moment_data, short_labels, "Эволюция системы во времени")
+            st.pyplot(fig_comparison)
         
-        st.subheader("🔍 Детальный просмотр по состояниям")
+        st.subheader("🔍 Детальный анализ по моментам")
         
-        # Показываем отдельные диаграммы в сетке 2 колонки
-        col1, col2 = st.columns(2)
+        # Показываем отдельные диаграммы для ключевых моментов
+        key_moments = [
+            ("Начальный момент", 0),
+            ("1/2 времени", n // 2),
+            ("Конечный момент", n - 1)
+        ]
         
-        for i, (name, idx) in enumerate(moments):
+        cols = st.columns(3)
+        
+        for i, (name, idx) in enumerate(key_moments):
             if idx < len(data_sol):
-                # Чередуем колонки
-                with col1 if i % 2 == 0 else col2:
+                with cols[i]:
                     st.write(f"**{name}**")
+                    st.caption(f"Время: {t[idx]:.2f}")
                     
                     # Диаграмма для одного состояния
-                    fig_single = radar.draw([data_sol[idx]], simple_labels, name)
-                    st.pyplot(fig_single)
+                    current_data = data_sol[idx]
+                    fig_moment = radar.draw([current_data], short_labels, name)
+                    st.pyplot(fig_moment)
                     
-                    # Таблица значений
-                    with st.expander("Численные значения"):
-                        values = data_sol[idx]
-                        for j, value in enumerate(values):
-                            param_name = simple_labels[j]
-                            st.write(f"{param_name}: `{value:.3f}`")
+                    # Значения параметров
+                    with st.expander("Значения"):
+                        for j, value in enumerate(current_data):
+                            st.write(f"**{short_labels[j]}**: {value:.3f}")
         
         st.subheader("📈 Анализ изменений")
         
         if len(data_sol) > 1:
-            # График изменений от начального до конечного состояния
-            initial = data_sol[0]
-            final = data_sol[-1]
-            changes = final - initial
+            # График изменений
+            changes = data_sol[-1] - data_sol[0]
             
-            fig_changes, ax = plt.subplots(figsize=(12, 6))
-            bars = ax.bar(range(14), changes, 
+            fig, ax = plt.subplots(figsize=(12, 6))
+            bars = ax.bar(short_labels, changes, 
                          color=['red' if x < 0 else 'green' for x in changes],
                          alpha=0.7)
             
-            ax.set_xlabel('Параметры системы')
             ax.set_ylabel('Изменение значения')
             ax.set_title('Изменение параметров от начального до конечного состояния')
-            ax.set_xticks(range(14))
-            ax.set_xticklabels(simple_labels, rotation=45)
             ax.grid(True, alpha=0.3)
             
-            # Добавляем подписи значений
+            # Добавляем подписи
             for bar, change in zip(bars, changes):
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., 
                        height + (0.01 if height >= 0 else -0.01),
                        f'{change:+.3f}', 
-                       ha='center', 
-                       va='bottom' if height >= 0 else 'top',
-                       fontweight='bold',
-                       fontsize=9)
+                       ha='center', va='bottom' if height >= 0 else 'top')
             
-            st.pyplot(fig_changes)
-            
-            # Сводная таблица изменений
-            st.write("**Сводка изменений:**")
-            summary_cols = st.columns(4)
-            increased = sum(1 for change in changes if change > 0)
-            decreased = sum(1 for change in changes if change < 0)
-            unchanged = sum(1 for change in changes if change == 0)
-            
-            with summary_cols[0]:
-                st.metric("Увеличились", increased, delta=increased)
-            with summary_cols[1]:
-                st.metric("Уменьшились", decreased, delta=-decreased)
-            with summary_cols[2]:
-                st.metric("Не изменились", unchanged)
-            with summary_cols[3]:
-                total_change = sum(changes)
-                st.metric("Суммарное изменение", f"{total_change:+.3f}")
+            st.pyplot(fig)
             
     else:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
-
 with tab4:
     st.header("Графики функций системы")
     
