@@ -257,87 +257,98 @@ def process_calculation(start_values, free_members):
     gc.collect()
     
     return t, data_sol
+
+
 def draw_third_graphic(t):
-    """График возмущений"""
+    """График всех функций системы на одном изображении"""
     global free_members_of_fun_expr
-    fig, ax = plt.subplots(figsize=(12, 8))
     
-    if free_members_of_fun_expr and len(free_members_of_fun_expr) >= 6:
-        y1 = []
-        y2 = []
-        y3 = []
-        y4 = []
-        y5 = []
-        y6 = []
+    # Создаем одну большую картинку со всеми графиками
+    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(15, 12))
+    axes = [ax1, ax2, ax3, ax4, ax5, ax6]
+    
+    function_names = [
+        "F1: Кубический полином (ax³ + bx² + cx + d)",
+        "F2: Линейная функция (ax + b)", 
+        "F3: Квадратный полином (ax² + bx + c)",
+        "F4: Линейная функция (ax + b)",
+        "F5: Квадратный полином (ax² + bx + c)",
+        "F6: Линейная функция (ax + b)"
+    ]
+    
+    # Цвета для графиков
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown']
+    
+    for i in range(6):
+        ax = axes[i]
         
-        for time_val in t:
-            # F1: Кубический полином
-            if len(free_members_of_fun_expr[0]) >= 4:
-                y1.append(free_members_of_fun_expr[0][0] * time_val**3 +
-                         free_members_of_fun_expr[0][1] * time_val**2 +
-                         free_members_of_fun_expr[0][2] * time_val +
-                         free_members_of_fun_expr[0][3])
-            else:
-                y1.append(time_val)
+        if i < len(free_members_of_fun_expr) and free_members_of_fun_expr[i]:
+            coeffs = free_members_of_fun_expr[i]
+            y = []
             
-            # F2: Линейная функция
-            if len(free_members_of_fun_expr[1]) >= 2:
-                y2.append(free_members_of_fun_expr[1][0] * time_val +
-                         free_members_of_fun_expr[1][1])
-            else:
-                y2.append(time_val)
+            # Вычисляем значения функции
+            for time_val in t:
+                if i == 0:  # Кубический полином
+                    if len(coeffs) >= 4:
+                        value = coeffs[0] * time_val**3 + coeffs[1] * time_val**2 + coeffs[2] * time_val + coeffs[3]
+                    else:
+                        value = time_val
+                elif i in [1, 3, 5]:  # Линейные функции
+                    if len(coeffs) >= 2:
+                        value = coeffs[0] * time_val + coeffs[1]
+                    else:
+                        value = time_val
+                else:  # Квадратные полиномы
+                    if len(coeffs) >= 3:
+                        value = coeffs[0] * time_val**2 + coeffs[1] * time_val + coeffs[2]
+                    else:
+                        value = time_val
+                y.append(value)
             
-            # F3: Квадратный полином
-            if len(free_members_of_fun_expr[2]) >= 3:
-                y3.append(free_members_of_fun_expr[2][0] * time_val**2 +
-                         free_members_of_fun_expr[2][1] * time_val +
-                         free_members_of_fun_expr[2][2])
-            else:
-                y3.append(time_val)
+            # Рисуем график
+            ax.plot(t, y, color=colors[i], linewidth=3, label=function_names[i])
             
-            # F4: Линейная функция
-            if len(free_members_of_fun_expr[3]) >= 2:
-                y4.append(free_members_of_fun_expr[3][0] * time_val +
-                         free_members_of_fun_expr[3][1])
-            else:
-                y4.append(time_val)
+            # Добавляем информацию о коэффициентах
+            coeff_text = "Коэффициенты:\n"
+            for j, coeff in enumerate(coeffs):
+                coeff_text += f"  {coeff:.4f}\n"
             
-            # F5: Квадратный полином
-            if len(free_members_of_fun_expr[4]) >= 3:
-                y5.append(free_members_of_fun_expr[4][0] * time_val**2 +
-                         free_members_of_fun_expr[4][1] * time_val +
-                         free_members_of_fun_expr[4][2])
-            else:
-                y5.append(time_val)
+            ax.text(0.02, 0.98, coeff_text, transform=ax.transAxes, 
+                   fontsize=9, verticalalignment='top',
+                   bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7))
             
-            # F6: Линейная функция
-            if len(free_members_of_fun_expr[5]) >= 2:
-                y6.append(free_members_of_fun_expr[5][0] * time_val +
-                         free_members_of_fun_expr[5][1])
+        else:
+            # Демо-график если нет данных
+            if i == 0:
+                y = t**3
+            elif i == 1:
+                y = 2*t + 0.5
+            elif i == 2:
+                y = t**2 + 0.3*t
+            elif i == 3:
+                y = 0.5*t + 0.2
+            elif i == 4:
+                y = 1.5*t**2 - 0.2*t
             else:
-                y6.append(time_val)
+                y = 0.8*t + 0.1
+                
+            ax.plot(t, y, color=colors[i], linewidth=3, label=function_names[i] + " (демо)")
+            ax.text(0.02, 0.98, "Демонстрационные\nкоэффициенты", transform=ax.transAxes, 
+                   fontsize=9, verticalalignment='top',
+                   bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
         
-        # Рисуем графики
-        ax.plot(t, y1, label='F1: Кубический полином', linewidth=2)
-        ax.plot(t, y2, label='F2: Линейная функция', linewidth=2)
-        ax.plot(t, y3, label='F3: Квадратный полином', linewidth=2)
-        ax.plot(t, y4, label='F4: Линейная функция', linewidth=2)
-        ax.plot(t, y5, label='F5: Квадратный полином', linewidth=2)
-        ax.plot(t, y6, label='F6: Линейная функция', linewidth=2)
+        # Настройка внешнего вида
+        ax.set_xlabel('Время')
+        ax.set_ylabel('F(x)')
+        ax.set_title(function_names[i], fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc='lower right', fontsize=8)
+        
+        # Устанавливаем одинаковые пределы для сравнения
+        ax.set_xlim(0, 1)
     
-    else:
-        # Если нет данных, показываем демо-графики
-        ax.plot(t, np.sin(2 * np.pi * t), label='F1: Демо функция 1', linewidth=2)
-        ax.plot(t, np.cos(2 * np.pi * t), label='F2: Демо функция 2', linewidth=2)
-        ax.plot(t, t**2, label='F3: Демо функция 3', linewidth=2)
-        ax.plot(t, np.sqrt(t), label='F4: Демо функция 4', linewidth=2)
-        ax.plot(t, np.exp(t) / np.exp(1), label='F5: Демо функция 5', linewidth=2)
-        ax.plot(t, 1 - t, label='F6: Демо функция 6', linewidth=2)
-    
-    ax.legend(loc='best')
-    ax.set_xlabel('Время')
-    ax.set_ylabel('Значение функции')
-    ax.set_title('Графики функций системы')
-    ax.grid(True, alpha=0.3)
+    # Общий заголовок
+    plt.suptitle('Графики всех функций системы', fontsize=16, fontweight='bold', y=0.95)
+    plt.tight_layout()
     
     return fig
