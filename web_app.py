@@ -22,7 +22,7 @@ if 'free_members' not in st.session_state:
 st.title("🌊 Модель анализа последствий наводнения")
 st.markdown("---")
 
-tab1, tab2, tab3, tab4 = st.tabs([" Параметры", " Графики", " Диаграмма", " Функции"])
+tab1, tab2, tab3, tab4 = st.tabs([" Параметры", " Графики", " Диаграмма", " Возмущение"])
 
 with tab1:
     st.header("Входные параметры характеристик наводнения")
@@ -220,26 +220,36 @@ with tab3:
     else:
         st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
 
-
 with tab4:
-    st.header("Графики функций системы")
+    st.header("Графики возмущений")
     
     if st.session_state.calculation_done and st.session_state.free_members is not None:
         t = st.session_state.t
-        fig = process.draw_functions_graphic(t, st.session_state.free_members)
+        fig = process.draw_third_graphic(t)
         
-        fig.set_size_inches(12, 8)
+        fig.set_size_inches(10, 6)
         ax = fig.gca()
         ax.set_xlabel('Время')
-        ax.set_ylabel('Значение функции')
-        ax.set_title('Графики 7 функций системы')
+        ax.set_ylabel('Значение')
+        ax.set_title('Временные коэффициенты возмущений')
         ax.legend()
         ax.grid(True)
         
         st.pyplot(fig)
         
+        from io import BytesIO
+        buf = BytesIO()
+        fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+        st.download_button(
+            label="📥 Скачать график возмущений",
+            data=buf.getvalue(),
+            file_name="график_возмущений.png",
+            mime="image/png",
+            use_container_width=True
+        )
+        
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры'")
+        st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть графики возмущений")
 
 st.markdown("---")
 st.markdown("**Система дифференциальных уравнений для моделирования последствий наводнения**")
