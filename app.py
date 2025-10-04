@@ -3,8 +3,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-import process_flood as process
-from radar_diagram_flood import RadarDiagram
+import process as process
+from radar_diagram import RadarDiagram
 
 # Настройка страницы
 st.set_page_config(
