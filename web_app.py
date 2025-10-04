@@ -1,17 +1,13 @@
-# app.py
+# web_app_flood.py
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
+import functions as functions
 import process as process
 from radar_diagram import RadarDiagram
 
-# Настройка страницы
-st.set_page_config(
-    page_title="Модель последствий наводнения", 
-    layout="wide",
-    page_icon="🌊"
-)
+st.set_page_config(page_title="Модель последствий наводнения", layout="wide")
 
 # Инициализация сессии
 if 'data_sol' not in st.session_state:
@@ -22,11 +18,10 @@ if 'free_members' not in st.session_state:
     st.session_state.free_members = None
 
 # Заголовок
-st.title("🌊 Модель анализа последствий наводнения")
-st.markdown("---")
+st.title("Модель анализа последствий наводнения")
 
 # Вкладки 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Параметры", "📈 Графики", "🎯 Диаграмма", "⚡ Возмущение"])
+tab1, tab2, tab3, tab4 = st.tabs(["Параметры", "Графики", "Диаграмма", "Возмущение"])
 
 with tab1:
     st.header("Входные параметры характеристик наводнения")
@@ -64,13 +59,12 @@ with tab1:
             start_values.append(value)
 
     st.header("Функции взаимовлияния параметров")
-    st.info("Настройте коэффициенты для функций модели")
     
     free_members = []
     selected_functions = []
     
-    # Создаем 10 функций (для демо - можно расширить до 66)
-    for i in range(10):
+    # Создаем 66 функций (f1-f66) согласно PDF
+    for i in range(66):
         with st.expander(f"f{i+1}(x) - {process.get_function_description(i)}", expanded=False):
             func_type = process.get_function_type(i)
             default_coeffs = process.get_default_coefficients(i)
@@ -136,7 +130,7 @@ with tab1:
     
     col_calc1, col_calc2, col_calc3 = st.columns([1, 2, 1])
     with col_calc2:
-        if st.button("🚀 Вычислить", use_container_width=True, key="main_calculate"):
+        if st.button("Вычислить", use_container_width=True, key="main_calculate"):
             with st.spinner("Выполняется расчет последствий наводнения..."):
                 try:
                     # Сохраняем уравнения в сессии
@@ -150,7 +144,7 @@ with tab1:
                     process.dict_of_function_expressions.clear()
                     
                     # Применяем выбранные функции
-                    for j in range(min(10, len(selected_functions))):
+                    for j in range(min(66, len(selected_functions))):
                         process.activatedCombox(j, str(selected_functions[j]))
                     
                     # Время моделирования
@@ -165,11 +159,11 @@ with tab1:
                     st.session_state.calculation_done = True
                     
                     status_placeholder.text("Статус: Успешно")
-                    st.success("✅ Моделирование завершено успешно!")
+                    st.success("Моделирование последствий наводнения завершено успешно!")
                     
                 except Exception as e:
                     status_placeholder.text("Статус: Ошибка")
-                    st.error(f"❌ Ошибка при вычислении: {str(e)}")
+                    st.error(f"Ошибка при вычислении: {str(e)}")
 
 with tab2:
     st.header("Динамика параметров последствий наводнения")
@@ -182,12 +176,12 @@ with tab2:
             
             fig, ax = plt.subplots(figsize=(15, 10))
             for i in range(14):
-                ax.plot(t, data_sol[:, i], label=labels[i], linewidth=1)
+                ax.plot(t, data_sol[:, i], label=labels[i], linewidth=2)
             
             ax.set_xlabel('Время')
             ax.set_ylabel('Значение')
-            ax.set_title('Динамика характеристик последствий наводнения')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+            ax.set_title('Динамика параметров последствий наводнения')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
             ax.grid(True, alpha=0.3)
             ax.set_xlim([0, 1])
             
@@ -197,20 +191,19 @@ with tab2:
             buf = BytesIO()
             fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
             st.download_button(
-                label="📥 Скачать график характеристик",
+                label="📥 Скачать график параметров",
                 data=buf.getvalue(),
                 file_name="график_параметров_наводнения.png",
                 mime="image/png",
                 use_container_width=True
             )
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть график характеристик")
+        st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть график")
 
 with tab3:
-    st.header("Радар-диаграммы")
+    st.header("Радар-диаграммы параметров наводнения")
     
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
-        # Создаем диаграммы
         radar = RadarDiagram()
         diagrams = {}
         data_sol = st.session_state.data_sol
@@ -218,22 +211,22 @@ with tab3:
         n = len(data_sol)
         
         diagrams['initial'] = radar.draw([data_sol[0]], labels, 
-                                       "Характеристики системы в начальный момент времени")
+                                       "Параметры в начальный момент времени")
         
         quarter_idx = n // 4
         diagrams['quarter'] = radar.draw([data_sol[0], data_sol[quarter_idx]], labels,
-                                       "Характеристики системы в 1 четверти")
+                                       "Параметры в 1 четверти")
         
         half_idx = n // 2
         diagrams['half'] = radar.draw([data_sol[0], data_sol[half_idx]], labels,
-                                    "Характеристики системы во 2 четверти")
+                                    "Параметры во 2 четверти")
         
         three_quarter_idx = 3 * n // 4
         diagrams['three_quarters'] = radar.draw([data_sol[0], data_sol[three_quarter_idx]], labels,
-                                              "Характеристики системы в 3 четверти")
+                                              "Параметры в 3 четверти")
         
         diagrams['final'] = radar.draw([data_sol[0], data_sol[-1]], labels,
-                                     "Характеристики системы в последний момент времени")
+                                     "Параметры в конечный момент времени")
         
         col1, col2 = st.columns(2)
         
@@ -255,10 +248,10 @@ with tab3:
             st.pyplot(diagrams['three_quarters'])
             
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
+        st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
 
 with tab4:
-    st.header("Графики возмущений")
+    st.header("Коэффициенты возмущений")
     
     if st.session_state.calculation_done and st.session_state.free_members is not None:
         t = st.session_state.t
@@ -268,7 +261,7 @@ with tab4:
         ax = fig.gca()
         ax.set_xlabel('Время')
         ax.set_ylabel('Значение')
-        ax.set_title('Временные коэффициенты возмущений')
+        ax.set_title('Временные коэффициенты возмущений для функций наводнения')
         ax.legend()
         ax.grid(True)
         
@@ -280,17 +273,13 @@ with tab4:
         st.download_button(
             label="📥 Скачать график возмущений",
             data=buf.getvalue(),
-            file_name="график_возмущений.png",
+            file_name="график_возмущений_наводнения.png",
             mime="image/png",
             use_container_width=True
         )
         
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть графики возмущений")
+        st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть графики возмущений")
 
 st.markdown("---")
-st.write("🌊 Модель анализа последствий наводнения - Оценка параметров чрезвычайной ситуации")
-
-# Явный запуск для Hugging Face
-if __name__ == "__main__":
-    pass
+st.write("Модель анализа последствий наводнения - Оценка параметров чрезвычайной ситуации")
