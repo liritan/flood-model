@@ -22,7 +22,7 @@ if 'free_members' not in st.session_state:
 st.title("🌊 Модель анализа последствий наводнения")
 st.markdown("---")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Параметры", "📈 Графики", "🎯 Диаграмма", "⚡ Функции"])
+tab1, tab2, tab3, tab4 = st.tabs([" Параметры", " Графики", " Диаграмма", " Функции"])
 
 with tab1:
     st.header("Входные параметры характеристик наводнения")
@@ -165,59 +165,63 @@ with tab3:
         data_sol = st.session_state.data_sol
         n = len(data_sol)
         
-        # Упрощенные метки для избежания ошибок
+        # Простые метки
         simple_labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         
-        st.subheader("📊 Ключевые состояния системы")
-        
-        # Безопасное создание промежуточных состояний
-        key_moments = [
-            ('Начальный момент', 0),
-            ('1/4 времени', max(1, n // 4)),
-            ('1/2 времени', max(1, n // 2)),
-            ('3/4 времени', max(1, 3 * n // 4)),
-            ('Конечный момент', max(1, n - 1))
+        # Определяем индексы для нужных моментов времени
+        moments = [
+            ("Начальный момент", 0),
+            ("1/4 времени", max(1, n // 4)),
+            ("1/2 времени", max(1, n // 2)),
+            ("3/4 времени", max(1, 3 * n // 4)),
+            ("Конечный момент", max(1, n - 1))
         ]
         
-        # Создаем данные для диаграммы
-        comparison_data = []
-        moment_names = []
+        # Собираем данные только для существующих индексов
+        valid_moments = []
+        moment_data = []
         
-        for name, idx in key_moments:
+        for name, idx in moments:
             if idx < len(data_sol):
-                comparison_data.append(data_sol[idx])
-                moment_names.append(name)
+                valid_moments.append(name)
+                moment_data.append(data_sol[idx])
         
-        # Рисуем диаграмму сравнения
-        if len(comparison_data) > 0:
-            fig_comparison = radar.draw(comparison_data, simple_labels, "Сравнение состояний системы")
-            st.pyplot(fig_comparison)
+        st.subheader("📊 Сравнение всех состояний")
         
-        st.subheader("🔍 Детальный анализ")
+        if len(moment_data) > 0:
+            # Основная диаграмма со всеми состояниями
+            fig_all = radar.draw(moment_data, simple_labels, "Динамика системы во времени")
+            st.pyplot(fig_all)
         
-        # Показываем отдельные диаграммы для каждого состояния
-        cols = st.columns(2)
+        st.subheader("🔍 Детальный просмотр по состояниям")
         
-        for i, (name, idx) in enumerate(key_moments):
+        # Показываем отдельные диаграммы в сетке 2 колонки
+        col1, col2 = st.columns(2)
+        
+        for i, (name, idx) in enumerate(moments):
             if idx < len(data_sol):
-                with cols[i % 2]:
-                    st.write(f"**{name}** (шаг {idx})")
+                # Чередуем колонки
+                with col1 if i % 2 == 0 else col2:
+                    st.write(f"**{name}**")
                     
-                    # Создаем диаграмму для одного состояния
-                    fig_single = radar.draw([data_sol[idx]], simple_labels, f"{name}")
+                    # Диаграмма для одного состояния
+                    fig_single = radar.draw([data_sol[idx]], simple_labels, name)
                     st.pyplot(fig_single)
                     
-                    # Показываем таблицу значений
-                    with st.expander("Значения параметров"):
-                        for j, value in enumerate(data_sol[idx]):
+                    # Таблица значений
+                    with st.expander("Численные значения"):
+                        values = data_sol[idx]
+                        for j, value in enumerate(values):
                             param_name = simple_labels[j]
-                            st.metric(param_name, f"{value:.3f}")
+                            st.write(f"{param_name}: `{value:.3f}`")
         
         st.subheader("📈 Анализ изменений")
         
         if len(data_sol) > 1:
             # График изменений от начального до конечного состояния
-            changes = data_sol[-1] - data_sol[0]
+            initial = data_sol[0]
+            final = data_sol[-1]
+            changes = final - initial
             
             fig_changes, ax = plt.subplots(figsize=(12, 6))
             bars = ax.bar(range(14), changes, 
@@ -239,13 +243,30 @@ with tab3:
                        f'{change:+.3f}', 
                        ha='center', 
                        va='bottom' if height >= 0 else 'top',
-                       fontweight='bold')
+                       fontweight='bold',
+                       fontsize=9)
             
             st.pyplot(fig_changes)
             
+            # Сводная таблица изменений
+            st.write("**Сводка изменений:**")
+            summary_cols = st.columns(4)
+            increased = sum(1 for change in changes if change > 0)
+            decreased = sum(1 for change in changes if change < 0)
+            unchanged = sum(1 for change in changes if change == 0)
+            
+            with summary_cols[0]:
+                st.metric("Увеличились", increased, delta=increased)
+            with summary_cols[1]:
+                st.metric("Уменьшились", decreased, delta=-decreased)
+            with summary_cols[2]:
+                st.metric("Не изменились", unchanged)
+            with summary_cols[3]:
+                total_change = sum(changes)
+                st.metric("Суммарное изменение", f"{total_change:+.3f}")
+            
     else:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
-
 with tab4:
     st.header("Графики функций системы")
     
