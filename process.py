@@ -260,95 +260,58 @@ def process_calculation(start_values, free_members):
 
 
 def draw_third_graphic(t):
-    """График всех функций системы на одном изображении"""
-    global free_members_of_fun_expr
+    """График временных возмущений системы"""
+    fig, ax = plt.subplots(figsize=(12, 8))
     
-    # Создаем одну большую картинку со всеми графиками
-    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(15, 12))
-    axes = [ax1, ax2, ax3, ax4, ax5, ax6]
+    # Вычисляем значения временных возмущений
+    y1 = []  # fak_1: t² + 1
+    y2 = []  # fak_2: cos²(1.5πt - π/6)/4 + 0.2
+    y3 = []  # fak_3: sin(πt - π/6)/2.5 + 0.3
+    y4 = []  # fak_4: 2t - 1
+    y5 = []  # fak_5: cos²(1.5πt - π/6)/4
+    y6 = []  # fak_6: sin²(πt - π/6)/2.5 + 0.3
     
-    function_names = [
-        "F1: Кубический полином (ax³ + bx² + cx + d)",
-        "F2: Линейная функция (ax + b)", 
-        "F3: Квадратный полином (ax² + bx + c)",
-        "F4: Линейная функция (ax + b)",
-        "F5: Квадратный полином (ax² + bx + c)",
-        "F6: Линейная функция (ax + b)"
-    ]
-    
-    # Цвета для графиков
-    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown']
-    
-    for i in range(6):
-        ax = axes[i]
+    for time_val in t:
+        # fak_1: t² + 1
+        y1.append(time_val**2 + 1)
         
-        if i < len(free_members_of_fun_expr) and free_members_of_fun_expr[i]:
-            coeffs = free_members_of_fun_expr[i]
-            y = []
-            
-            # Вычисляем значения функции
-            for time_val in t:
-                if i == 0:  # Кубический полином
-                    if len(coeffs) >= 4:
-                        value = coeffs[0] * time_val**3 + coeffs[1] * time_val**2 + coeffs[2] * time_val + coeffs[3]
-                    else:
-                        value = time_val
-                elif i in [1, 3, 5]:  # Линейные функции
-                    if len(coeffs) >= 2:
-                        value = coeffs[0] * time_val + coeffs[1]
-                    else:
-                        value = time_val
-                else:  # Квадратные полиномы
-                    if len(coeffs) >= 3:
-                        value = coeffs[0] * time_val**2 + coeffs[1] * time_val + coeffs[2]
-                    else:
-                        value = time_val
-                y.append(value)
-            
-            # Рисуем график
-            ax.plot(t, y, color=colors[i], linewidth=3, label=function_names[i])
-            
-            # Добавляем информацию о коэффициентах
-            coeff_text = "Коэффициенты:\n"
-            for j, coeff in enumerate(coeffs):
-                coeff_text += f"  {coeff:.4f}\n"
-            
-            ax.text(0.02, 0.98, coeff_text, transform=ax.transAxes, 
-                   fontsize=9, verticalalignment='top',
-                   bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7))
-            
-        else:
-            # Демо-график если нет данных
-            if i == 0:
-                y = t**3
-            elif i == 1:
-                y = 2*t + 0.5
-            elif i == 2:
-                y = t**2 + 0.3*t
-            elif i == 3:
-                y = 0.5*t + 0.2
-            elif i == 4:
-                y = 1.5*t**2 - 0.2*t
-            else:
-                y = 0.8*t + 0.1
-                
-            ax.plot(t, y, color=colors[i], linewidth=3, label=function_names[i] + " (демо)")
-            ax.text(0.02, 0.98, "Демонстрационные\nкоэффициенты", transform=ax.transAxes, 
-                   fontsize=9, verticalalignment='top',
-                   bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
+        # fak_2: cos²(1.5πt - π/6)/4 + 0.2
+        y2.append(np.cos(1.5 * time_val * np.pi - np.pi / 6) ** 2 / 4 + 0.2)
         
-        # Настройка внешнего вида
-        ax.set_xlabel('Время')
-        ax.set_ylabel('F(x)')
-        ax.set_title(function_names[i], fontweight='bold')
-        ax.grid(True, alpha=0.3)
-        ax.legend(loc='lower right', fontsize=8)
+        # fak_3: sin(πt - π/6)/2.5 + 0.3
+        y3.append(np.sin(time_val * np.pi - np.pi / 6) / 2.5 + 0.3)
         
-        # Устанавливаем одинаковые пределы для сравнения
-        ax.set_xlim(0, 1)
+        # fak_4: 2t - 1
+        y4.append(2 * time_val - 1)
+        
+        # fak_5: cos²(1.5πt - π/6)/4
+        y5.append(np.cos(1.5 * time_val * np.pi - np.pi / 6) ** 2 / 4)
+        
+        # fak_6: sin²(πt - π/6)/2.5 + 0.3
+        y6.append(np.sin(time_val * np.pi - np.pi / 6) ** 2 / 2.5 + 0.3)
     
-    # Общий заголовок
-    plt.suptitle('Графики всех функций системы', fontsize=16, fontweight='bold', y=0.95)
+    # Рисуем все возмущения на одном графике
+    ax.plot(t, y1, label='fak₁(t) = t² + 1', linewidth=2, color='blue')
+    ax.plot(t, y2, label='fak₂(t) = cos²(1.5πt - π/6)/4 + 0.2', linewidth=2, color='red')
+    ax.plot(t, y3, label='fak₃(t) = sin(πt - π/6)/2.5 + 0.3', linewidth=2, color='green')
+    ax.plot(t, y4, label='fak₄(t) = 2t - 1', linewidth=2, color='orange')
+    ax.plot(t, y5, label='fak₅(t) = cos²(1.5πt - π/6)/4', linewidth=2, color='purple')
+    ax.plot(t, y6, label='fak₆(t) = sin²(πt - π/6)/2.5 + 0.3', linewidth=2, color='brown')
+    
+    # Настройка графика
+    ax.set_xlabel('Время (t)')
+    ax.set_ylabel('Значение возмущения')
+    ax.set_title('Временные возмущения системы', fontsize=14, fontweight='bold')
+    ax.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, 1)
+    
+    # Добавляем описание возмущений
+    ax.text(0.02, 0.02, 
+            'Возмущения fak₁-fak₆ используются в системе уравнений\nдля моделирования временных изменений параметров',
+            transform=ax.transAxes, fontsize=10, 
+            bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8),
+            verticalalignment='bottom')
+    
     plt.tight_layout()
-    
     return fig
