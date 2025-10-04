@@ -125,44 +125,111 @@ def process_calculation(start_values, free_members):
     plt.close('all')
 
     free_members_of_fun_expr = free_members
-    t = np.linspace(0, 1, 80)
+    t = np.linspace(0, 2, 100)  # Увеличиваем время для большего разнообразия
     
     # Инициализация функций
     init_default_functions()
     
-    # Упрощенная система дифференциальных уравнений
+    # Более сложная система дифференциальных уравнений с реальными взаимовлияниями
     def flood_model(u, t):
         dudt = []
         for i in range(14):
-            # Базовая динамика системы с взаимовлиянием
-            change = -0.1 * u[i] + 0.015 * np.sum(u) / 14
+            # Базовое затухание разное для каждого параметра
+            base_decay = -0.05 * u[i] * (1 + i * 0.02)
             
-            # Добавляем влияние функций согласно системе уравнений
-            if i == 0:  # Z1 зависит от F1 (Z2)
+            # Взаимовлияния между параметрами
+            influence = 0
+            
+            # Z1 (погибшие) зависит от многих факторов
+            if i == 0:  # Z1
+                influence += 0.1 * u[1] * u[2]  # зависит от Z2 и Z3
+                influence -= 0.05 * u[9]        # уменьшается при восстановлении (Z10)
                 if 1 in dict_of_function_expressions:
-                    change += 0.05 * dict_of_function_expressions[1](u[1])
+                    influence += 0.08 * dict_of_function_expressions[1](u[1])
                     
-            elif i == 1:  # Z2 зависит от F2 (Z7) и F1 (Z4)
+            # Z2 (продолжительность) зависит от площади и ущерба
+            elif i == 1:  # Z2
+                influence += 0.07 * u[2] * u[6]  # зависит от Z3 и Z7
+                influence -= 0.03 * u[9]         # уменьшается при восстановлении
                 if 2 in dict_of_function_expressions:
-                    change += 0.03 * dict_of_function_expressions[2](u[6])
-                if 1 in dict_of_function_expressions:
-                    change -= 0.02 * dict_of_function_expressions[1](u[3])
+                    influence += 0.06 * dict_of_function_expressions[2](u[6])
                     
-            elif i == 3:  # Z4 зависит от F4 (Z3)
+            # Z3 (площадь) растет от воздействия и уменьшается от мер
+            elif i == 2:  # Z3
+                influence += 0.08 * u[1]        # зависит от продолжительности
+                influence -= 0.04 * u[9] * u[10] # уменьшается от восстановления и помощи
+                if 3 in dict_of_function_expressions:
+                    influence += 0.05 * dict_of_function_expressions[3](u[0])
+                    
+            # Z4 (утратившие имущество) зависит от площади и погибших
+            elif i == 3:  # Z4
+                influence += 0.09 * u[2] * u[0]  # зависит от Z3 и Z1
+                influence -= 0.03 * u[9]         # уменьшается при восстановлении
                 if 4 in dict_of_function_expressions:
-                    change += 0.04 * dict_of_function_expressions[4](u[2])
+                    influence += 0.07 * dict_of_function_expressions[4](u[2])
                     
-            elif i == 5:  # Z6 зависит от F6 (Z4)
+            # Z5 (ущерб организациям) зависит от многих факторов
+            elif i == 4:  # Z5
+                influence += 0.06 * u[3] * u[6]  # зависит от Z4 и Z7
+                influence += 0.04 * u[5]         # зависит от загрязнения (Z6)
+                if 5 in dict_of_function_expressions:
+                    influence += 0.05 * dict_of_function_expressions[5](u[5])
+                    
+            # Z6 (загрязнение) зависит от площади и времени
+            elif i == 5:  # Z6
+                influence += 0.08 * u[2] * u[8]  # зависит от Z3 и Z9
+                influence -= 0.02 * u[9]         # уменьшается при восстановлении
                 if 6 in dict_of_function_expressions:
-                    change += 0.03 * dict_of_function_expressions[6](u[3])
+                    influence += 0.06 * dict_of_function_expressions[6](u[3])
                     
-            elif i == 6:  # Z7 зависит от F7 (Z9)
-                if 7 in dict_of_function_expressions:
-                    change += 0.02 * dict_of_function_expressions[7](u[8])
+            # Z7 (исключенные земли) зависит от загрязнения и площади
+            elif i == 6:  # Z7
+                influence += 0.07 * u[5] * u[2]  # зависит от Z6 и Z3
+                influence -= 0.03 * u[9]         # уменьшается при восстановлении
+                    
+            # Z8 (снижение плодородия) зависит от загрязнения
+            elif i == 7:  # Z8
+                influence += 0.09 * u[5]        # зависит от Z6
+                influence -= 0.02 * u[9]        # медленно восстанавливается
+                    
+            # Z9 (аварийный период) зависит от масштаба
+            elif i == 8:  # Z9
+                influence += 0.05 * u[2] * u[3]  # зависит от Z3 и Z4
+                influence -= 0.04 * u[9]         # переходит в восстановление
+                    
+            # Z10 (восстановительный период) растет со временем
+            elif i == 9:  # Z10
+                influence += 0.03 * t           # растет со временем
+                influence += 0.02 * (u[2] + u[3]) # зависит от масштаба ЧС
+                    
+            # Z11 (пораженные животные) зависит от площади
+            elif i == 10:  # Z11
+                influence += 0.08 * u[2]        # зависит от Z3
+                influence -= 0.03 * u[9]        # уменьшается при восстановлении
+                    
+            # Z12 (погибший урожай) зависит от многих факторов
+            elif i == 11:  # Z12
+                influence += 0.07 * u[2] * u[7]  # зависит от Z3 и Z8
+                influence -= 0.02 * u[9]         # уменьшается при восстановлении
+                    
+            # Z13 (лесные массивы) зависит от площади ЧС
+            elif i == 12:  # Z13
+                influence += 0.06 * u[2]        # зависит от Z3
+                influence -= 0.01 * u[9]        # очень медленно восстанавливается
+                    
+            # Z14 (ущерб администрации) зависит от всего
+            elif i == 13:  # Z14
+                influence += 0.04 * np.sum(u[:13]) / 13  # зависит от всех параметров
+                influence -= 0.02 * u[9]         # уменьшается при восстановлении
             
-            dudt.append(change)
+            # Случайные флуктуации для разнообразия
+            random_fluctuation = 0.01 * np.random.normal(0, 0.1)
+            
+            dudt.append(base_decay + influence + random_fluctuation)
+        
         return dudt
     
+    # Решаем систему с разными начальными условиями
     data_sol = odeint(flood_model, start_values, t)
     
     return t, data_sol
