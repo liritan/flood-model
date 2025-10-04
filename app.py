@@ -3,8 +3,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-import process as process
-from radar_diagram import RadarDiagram
+import process_flood as process
+from radar_diagram_flood import RadarDiagram
 
 # Настройка страницы
 st.set_page_config(
@@ -21,7 +21,7 @@ if 'calculation_done' not in st.session_state:
 if 'free_members' not in st.session_state:
     st.session_state.free_members = None
 
-# Главный заголовок
+# Заголовок
 st.title("🌊 Модель анализа последствий наводнения")
 st.markdown("---")
 
@@ -64,18 +64,28 @@ with tab1:
             start_values.append(value)
 
     st.header("Функции взаимовлияния параметров")
-    st.info("Настройте коэффициенты для 66 функций модели")
+    st.info("Настройте коэффициенты для функций модели")
     
     free_members = []
     selected_functions = []
     
-    # Создаем 66 функций (f1-f66) согласно PDF
-    # Для экономии места покажем только первые 10 функций
-    # В полной версии будут все 66
-    for i in range(10):  # Измените на 66 для полной версии
+    # Создаем 10 функций (для демо - можно расширить до 66)
+    for i in range(10):
         with st.expander(f"f{i+1}(x) - {process.get_function_description(i)}", expanded=False):
             func_type = process.get_function_type(i)
             default_coeffs = process.get_default_coefficients(i)
+            
+            col_header = st.columns([1, 3])
+            with col_header[0]:
+                func_select = st.selectbox(
+                    f"f{i+1}(x) →",
+                    options=list(range(1, 128)),
+                    index=min(i, 126),
+                    key=f"func_{i}_select"
+                )
+                selected_functions.append(func_select)
+            with col_header[1]:
+                st.write(f"F{func_select}(x)")
             
             if func_type == "polynomial_4":
                 cols = st.columns(4)
@@ -116,109 +126,139 @@ with tab1:
                 with cols[1]:
                     b = st.number_input("b", value=float(default_coeffs[1]), key=f"f{i}_b")
                 free_members.append([a, b])
-            
-            selected_functions.append(i+1)
 
-    # Кнопка расчета
     st.markdown("---")
-    if st.button("🚀 Выполнить расчет", use_container_width=True):
-        with st.spinner("Выполняется расчет последствий наводнения..."):
-            try:
-                st.session_state.free_members = free_members
-                st.session_state.selected_functions = selected_functions
-                
-                process.free_members_of_fun_expr = free_members
-                
-                # Инициализация функций
-                process.dict_of_function_expressions.clear()
-                for j in range(min(10, len(selected_functions))):
-                    process.activatedCombox(j, str(selected_functions[j]))
-                
-                # Выполняем расчет
-                t, data_sol = process.process_calculation(start_values, free_members)
-                
-                # Сохраняем результаты
-                st.session_state.data_sol = data_sol
-                st.session_state.t = t
-                st.session_state.calculation_done = True
-                
-                st.success("✅ Моделирование завершено успешно!")
-                
-            except Exception as e:
-                st.error(f"❌ Ошибка при вычислении: {str(e)}")
+    
+    col_status1, col_status2, col_status3 = st.columns([1, 2, 1])
+    with col_status2:
+        status_placeholder = st.empty()
+        status_placeholder.text("Статус: Ожидание вычислений")
+    
+    col_calc1, col_calc2, col_calc3 = st.columns([1, 2, 1])
+    with col_calc2:
+        if st.button("🚀 Вычислить", use_container_width=True, key="main_calculate"):
+            with st.spinner("Выполняется расчет последствий наводнения..."):
+                try:
+                    # Сохраняем уравнения в сессии
+                    st.session_state.free_members = free_members
+                    st.session_state.selected_functions = selected_functions
+                    
+                    # Устанавливаем параметры
+                    process.free_members_of_fun_expr = free_members
+                    
+                    # Инициализация функций
+                    process.dict_of_function_expressions.clear()
+                    
+                    # Применяем выбранные функции
+                    for j in range(min(10, len(selected_functions))):
+                        process.activatedCombox(j, str(selected_functions[j]))
+                    
+                    # Время моделирования
+                    t = np.linspace(0, 1, 80)
+                    
+                    # Выполняем расчет
+                    t, data_sol = process.process_calculation(start_values, free_members)
+                    
+                    # Сохраняем результаты
+                    st.session_state.data_sol = data_sol
+                    st.session_state.t = t
+                    st.session_state.calculation_done = True
+                    
+                    status_placeholder.text("Статус: Успешно")
+                    st.success("✅ Моделирование завершено успешно!")
+                    
+                except Exception as e:
+                    status_placeholder.text("Статус: Ошибка")
+                    st.error(f"❌ Ошибка при вычислении: {str(e)}")
 
-# Остальные вкладки (tab2, tab3, tab4) остаются без изменений
 with tab2:
     st.header("Динамика параметров последствий наводнения")
     
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
-        t = st.session_state.t
-        data_sol = st.session_state.data_sol
-        labels = process.labels_array()
-        
-        fig, ax = plt.subplots(figsize=(12, 8))
-        for i in range(14):
-            ax.plot(t, data_sol[:, i], label=labels[i], linewidth=2)
-        
-        ax.set_xlabel('Время')
-        ax.set_ylabel('Значение')
-        ax.set_title('Динамика параметров последствий наводнения')
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
-        ax.grid(True, alpha=0.3)
-        ax.set_xlim([0, 1])
-        
-        st.pyplot(fig)
-        
-        # Кнопка скачивания
-        from io import BytesIO
-        buf = BytesIO()
-        fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
-        st.download_button(
-            label="📥 Скачать график параметров",
-            data=buf.getvalue(),
-            file_name="график_параметров_наводнения.png",
-            mime="image/png",
-            use_container_width=True
-        )
+        if st.button("Построить график"):
+            t = st.session_state.t
+            data_sol = st.session_state.data_sol
+            labels = process.labels_array()
+            
+            fig, ax = plt.subplots(figsize=(15, 10))
+            for i in range(14):
+                ax.plot(t, data_sol[:, i], label=labels[i], linewidth=1)
+            
+            ax.set_xlabel('Время')
+            ax.set_ylabel('Значение')
+            ax.set_title('Динамика характеристик последствий наводнения')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim([0, 1])
+            
+            st.pyplot(fig)
+            
+            from io import BytesIO
+            buf = BytesIO()
+            fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+            st.download_button(
+                label="📥 Скачать график характеристик",
+                data=buf.getvalue(),
+                file_name="график_параметров_наводнения.png",
+                mime="image/png",
+                use_container_width=True
+            )
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть график")
+        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть график характеристик")
 
 with tab3:
-    st.header("Радар-диаграммы параметров наводнения")
+    st.header("Радар-диаграммы")
     
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
+        # Создаем диаграммы
         radar = RadarDiagram()
+        diagrams = {}
         data_sol = st.session_state.data_sol
         labels = process.labels_array()
         n = len(data_sol)
         
+        diagrams['initial'] = radar.draw([data_sol[0]], labels, 
+                                       "Характеристики системы в начальный момент времени")
+        
+        quarter_idx = n // 4
+        diagrams['quarter'] = radar.draw([data_sol[0], data_sol[quarter_idx]], labels,
+                                       "Характеристики системы в 1 четверти")
+        
+        half_idx = n // 2
+        diagrams['half'] = radar.draw([data_sol[0], data_sol[half_idx]], labels,
+                                    "Характеристики системы во 2 четверти")
+        
+        three_quarter_idx = 3 * n // 4
+        diagrams['three_quarters'] = radar.draw([data_sol[0], data_sol[three_quarter_idx]], labels,
+                                              "Характеристики системы в 3 четверти")
+        
+        diagrams['final'] = radar.draw([data_sol[0], data_sol[-1]], labels,
+                                     "Характеристики системы в последний момент времени")
+        
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("Начальный vs Конечный момент")
-            fig_final = radar.draw([data_sol[0], data_sol[-1]], labels,
-                                 "Сравнение начального и конечного состояния")
-            st.pyplot(fig_final)
+            st.subheader("Начальный момент")
+            st.pyplot(diagrams['initial'])
             
+            st.subheader("1/2 времени")
+            st.pyplot(diagrams['half'])
+            
+            st.subheader("Конечный момент")
+            st.pyplot(diagrams['final'])
+        
         with col2:
-            st.subheader("Динамика по четвертям")
-            quarter_idx = n // 4
-            half_idx = n // 2
-            three_quarter_idx = 3 * n // 4
+            st.subheader("1/4 времени")
+            st.pyplot(diagrams['quarter'])
             
-            fig_quarters = radar.draw([
-                data_sol[0], 
-                data_sol[quarter_idx],
-                data_sol[half_idx],
-                data_sol[three_quarter_idx]
-            ], labels, "Динамика по четвертям времени")
-            st.pyplot(fig_quarters)
+            st.subheader("3/4 времени")
+            st.pyplot(diagrams['three_quarters'])
             
     else:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
 
 with tab4:
-    st.header("Коэффициенты возмущений")
+    st.header("Графики возмущений")
     
     if st.session_state.calculation_done and st.session_state.free_members is not None:
         t = st.session_state.t
@@ -234,10 +274,23 @@ with tab4:
         
         st.pyplot(fig)
         
+        from io import BytesIO
+        buf = BytesIO()
+        fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+        st.download_button(
+            label="📥 Скачать график возмущений",
+            data=buf.getvalue(),
+            file_name="график_возмущений.png",
+            mime="image/png",
+            use_container_width=True
+        )
+        
     else:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть графики возмущений")
 
-# Футер
 st.markdown("---")
-st.markdown("### 📊 Модель анализа последствий наводнения")
-st.markdown("**Разработано для оценки параметров чрезвычайной ситуации**")
+st.write("🌊 Модель анализа последствий наводнения - Оценка параметров чрезвычайной ситуации")
+
+# Явный запуск для Hugging Face
+if __name__ == "__main__":
+    pass
