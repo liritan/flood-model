@@ -66,56 +66,55 @@ class RadarDiagram():
 
         spoke_labels = labels
 
-        fig, axs = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='radar'))
+        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='radar'))
         fig.subplots_adjust(wspace=1, hspace=1, top=0.85, bottom=0.05)
 
-        colors = ['b', 'r', 'g', 'orange', 'purple', 'brown', 'pink']
+        colors = ['b', 'r', 'g', 'orange', 'purple']
         
-        # Масштабирование 
-        all_data = np.concatenate(data)
+        # Находим диапазон данных для правильного масштабирования
+        all_data = np.concatenate([np.array(d) for d in data])
         min_val = np.min(all_data)
         max_val = np.max(all_data)
         
-        # Сетка значений
-        if max_val - min_val > 0:
-            grid_values = [min_val, (min_val + max_val)/2, max_val*0.75, max_val]
+        # Устанавливаем сетку значений
+        if max_val > min_val:
+            grid_values = [min_val, (min_val + max_val)/2, max_val]
         else:
-            grid_values = [0, 0.25, 0.5, 0.75, 1.0]
+            grid_values = [0, 0.5, 1.0]
             
-        axs.set_rgrids(grid_values)
+        ax.set_rgrids(grid_values)
+        ax.set_ylim(min_val, max_val * 1.1)
 
         for ind, dataset in enumerate(data):
-            # Убеждаемся что данные имеют правильную длину
-            if len(dataset) != N:
-                if len(dataset) > N:
-                    plot_data = dataset[:N]
-                else:
-                    plot_data = np.pad(dataset, (0, N - len(dataset)), 'constant')
-            else:
-                plot_data = dataset
-                
-            axs.plot(theta, plot_data, color=colors[ind % len(colors)], linewidth=2)
-            axs.fill(theta, plot_data, color=colors[ind % len(colors)], alpha=0.1)
+            # Преобразуем в numpy array и убеждаемся в правильной длине
+            dataset_array = np.array(dataset)
             
-        axs.set_varlabels(spoke_labels)
+            # Если данных меньше чем меток, дополняем последним значением
+            if len(dataset_array) < N:
+                dataset_array = np.pad(dataset_array, (0, N - len(dataset_array)), 
+                                     'constant', constant_values=dataset_array[-1] if len(dataset_array) > 0 else 0.1)
+            # Если данных больше, обрезаем
+            elif len(dataset_array) > N:
+                dataset_array = dataset_array[:N]
+            
+            # Рисуем линию
+            line = ax.plot(theta, dataset_array, color=colors[ind % len(colors)], 
+                          linewidth=2, label=f'Состояние {ind+1}')
+            
+            # Заливаем область
+            ax.fill(theta, dataset_array, color=colors[ind % len(colors)], alpha=0.1)
+            
+        ax.set_varlabels(spoke_labels)
 
-        # Легенда в зависимости от количества данных
+        # Создаем легенду в зависимости от количества данных
         if len(data) == 1:
             legend_labels = ['Текущее состояние']
         elif len(data) == 2:
-            legend_labels = ['Начальное состояние', 'Конечное состояние']
-        elif len(data) == 5:
-            legend_labels = [
-                'Начальный момент', 
-                '1/4 времени', 
-                '1/2 времени', 
-                '3/4 времени', 
-                'Конечный момент'
-            ]
+            legend_labels = ['Начальное состояние', 'Текущее состояние']
         else:
             legend_labels = [f'Состояние {i+1}' for i in range(len(data))]
             
-        axs.legend(legend_labels, loc=(-0.2, 0.9), labelspacing=0.1, fontsize='medium')
+        ax.legend(legend_labels, loc=(-0.2, 0.9), labelspacing=0.1, fontsize='medium')
 
         # Заголовок 
         fig.text(0.5, 0.95, title, horizontalalignment='center', 

@@ -169,95 +169,75 @@ with tab2:
         st.info("ℹ️ Выполните вычисления на вкладке 'Параметры'")
 
 with tab3:
-    st.header("🎯 Радар-диаграммы в разные моменты времени")
+    st.header("Радар-диаграммы")
     
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
+        # Создаем диаграммы
         radar = RadarDiagram()
+        diagrams = {}
         data_sol = st.session_state.data_sol
+        labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         n = len(data_sol)
-        t = st.session_state.t
         
-        # Сокращенные метки для лучшего отображения
-        short_labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
+        # Отладочная информация - покажем реальные значения
+        st.write("**Реальные значения параметров:**")
+        col1, col2, col3 = st.columns(3)
         
-        st.subheader("📊 Сравнение всех состояний системы")
+        with col1:
+            st.write("Начальные:")
+            for i, val in enumerate(data_sol[0]):
+                st.write(f"Z{i+1}: {val:.3f}")
         
-        # Определяем конкретные моменты времени
-        moments = [
-            ("Начальный момент", 0),
-            ("1/4 времени", n // 4),
-            ("1/2 времени", n // 2),
-            ("3/4 времени", 3 * n // 4),
-            ("Конечный момент", n - 1)
-        ]
+        with col2:
+            quarter_idx = n // 4
+            st.write(f"1/4 времени (шаг {quarter_idx}):")
+            for i, val in enumerate(data_sol[quarter_idx]):
+                st.write(f"Z{i+1}: {val:.3f}")
         
-        # Собираем данные для каждого момента
-        moment_data = []
+        with col3:
+            st.write("Конечные:")
+            for i, val in enumerate(data_sol[-1]):
+                st.write(f"Z{i+1}: {val:.3f}")
+   
+        diagrams['initial'] = radar.draw([data_sol[0]], labels, 
+                                       "Характеристики системы в начальный момент времени")
         
-        for name, idx in moments:
-            if idx < len(data_sol):
-                moment_data.append(data_sol[idx])
+        quarter_idx = n // 4
+        diagrams['quarter'] = radar.draw([data_sol[0], data_sol[quarter_idx]], labels,
+                                       "Характеристики системы в 1 четверти")
         
-        # Основная диаграмма со всеми состояниями
-        if len(moment_data) > 0:
-            fig_comparison = radar.draw(moment_data, short_labels, "Эволюция системы во времени")
-            st.pyplot(fig_comparison)
+        half_idx = n // 2
+        diagrams['half'] = radar.draw([data_sol[0], data_sol[half_idx]], labels,
+                                    "Характеристики системы во 2 четверти")
         
-        st.subheader("🔍 Детальный анализ по моментам")
+        three_quarter_idx = 3 * n // 4
+        diagrams['three_quarters'] = radar.draw([data_sol[0], data_sol[three_quarter_idx]], labels,
+                                              "Характеристики системы в 3 четверти")
         
-        # Показываем отдельные диаграммы для ключевых моментов
-        key_moments = [
-            ("Начальный момент", 0),
-            ("1/2 времени", n // 2),
-            ("Конечный момент", n - 1)
-        ]
+        diagrams['final'] = radar.draw([data_sol[0], data_sol[-1]], labels,
+                                     "Характеристики системы в последний момент времени")
         
-        cols = st.columns(3)
+        col1, col2 = st.columns(2)
         
-        for i, (name, idx) in enumerate(key_moments):
-            if idx < len(data_sol):
-                with cols[i]:
-                    st.write(f"**{name}**")
-                    st.caption(f"Время: {t[idx]:.2f}")
-                    
-                    # Диаграмма для одного состояния
-                    current_data = data_sol[idx]
-                    fig_moment = radar.draw([current_data], short_labels, name)
-                    st.pyplot(fig_moment)
-                    
-                    # Значения параметров
-                    with st.expander("Значения"):
-                        for j, value in enumerate(current_data):
-                            st.write(f"**{short_labels[j]}**: {value:.3f}")
-        
-        st.subheader("📈 Анализ изменений")
-        
-        if len(data_sol) > 1:
-            # График изменений
-            changes = data_sol[-1] - data_sol[0]
+        with col1:
+            st.subheader("Начальный момент")
+            st.pyplot(diagrams['initial'])
             
-            fig, ax = plt.subplots(figsize=(12, 6))
-            bars = ax.bar(short_labels, changes, 
-                         color=['red' if x < 0 else 'green' for x in changes],
-                         alpha=0.7)
+            st.subheader("1/2 времени")
+            st.pyplot(diagrams['half'])
             
-            ax.set_ylabel('Изменение значения')
-            ax.set_title('Изменение параметров от начального до конечного состояния')
-            ax.grid(True, alpha=0.3)
+            st.subheader("Конечный момент")
+            st.pyplot(diagrams['final'])
+        
+        with col2:
+            st.subheader("1/4 времени")
+            st.pyplot(diagrams['quarter'])
             
-            # Добавляем подписи
-            for bar, change in zip(bars, changes):
-                height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width()/2., 
-                       height + (0.01 if height >= 0 else -0.01),
-                       f'{change:+.3f}', 
-                       ha='center', va='bottom' if height >= 0 else 'top')
-            
-            st.pyplot(fig)
+            st.subheader("3/4 времени")
+            st.pyplot(diagrams['three_quarters'])
             
     else:
-        st.info("ℹ️ Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
-
+        st.info("Выполните вычисления на вкладке 'Параметры' чтобы увидеть диаграммы")
 
 
 with tab4:
