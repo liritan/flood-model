@@ -179,25 +179,6 @@ with tab3:
         labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         n = len(data_sol)
         
-        # Отладочная информация - покажем реальные значения
-        st.write("**Реальные значения параметров:**")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.write("Начальные:")
-            for i, val in enumerate(data_sol[0]):
-                st.write(f"Z{i+1}: {val:.3f}")
-        
-        with col2:
-            quarter_idx = n // 4
-            st.write(f"1/4 времени (шаг {quarter_idx}):")
-            for i, val in enumerate(data_sol[quarter_idx]):
-                st.write(f"Z{i+1}: {val:.3f}")
-        
-        with col3:
-            st.write("Конечные:")
-            for i, val in enumerate(data_sol[-1]):
-                st.write(f"Z{i+1}: {val:.3f}")
    
         diagrams['initial'] = radar.draw([data_sol[0]], labels, 
                                        "Характеристики системы в начальный момент времени")
