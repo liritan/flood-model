@@ -1,13 +1,13 @@
----
-title: Flood Model
-emoji: 🏃
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: 5.49.0
-app_file: app.py
-pinned: false
-license: mit
----
+# Lab #2
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+Лабораторная работа №2 по предмету "Теория информационных процессов и систем"
+
+## Авторы
+
+- **Шапошникова А.Д.**
+- **Шугаева К.А.** 
+- **Мкртчян Д.Т.**
+
+Группа: Б2-ИФСТ-41
+
+
