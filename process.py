@@ -1,238 +1,105 @@
-# process_flood.py
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import odeint
-from radar_diagram import RadarDiagram
 import functions as functions
 import streamlit as st
-import math
 
-dict_of_function_expressions = dict()
+dict_of_function_expressions = {}
 free_members_of_fun_expr = []
 data_sol = []
 
-def init():
-    """Инициализация функций для модели наводнения"""
-    for i in range(1, 67):
-        dict_of_function_expressions[i] = create_flood_function(i)
+def init_default_functions():
+    """Инициализация 7 функций по умолчанию"""
+    global dict_of_function_expressions
+    dict_of_function_expressions.clear()
+    dict_of_function_expressions[1] = function_0
+    dict_of_function_expressions[2] = function_1  
+    dict_of_function_expressions[3] = function_2
+    dict_of_function_expressions[4] = function_3
+    dict_of_function_expressions[5] = function_4
+    dict_of_function_expressions[6] = function_5
+    dict_of_function_expressions[7] = function_6
 
-def create_flood_function(index):
-    """Создание функции для конкретного параметра наводнения"""
-    def flood_function(u):
-        # Базовая реализация - будет переопределена через интерфейс
-        return u
-    return flood_function
+def function_0(u):
+    """Кубический полином: ax³ + bx² + cx + d"""
+    if len(free_members_of_fun_expr) > 0:
+        coeffs = free_members_of_fun_expr[0]
+        return coeffs[0] * u**3 + coeffs[1] * u**2 + coeffs[2] * u + coeffs[3]
+    return u
 
-def activatedCombox(index, text):
-    """Активация выбранной функции"""
-    try:
-        func_num = int(text)
-        # Создаем функцию с правильными коэффициентами
-        if index < len(free_members_of_fun_expr):
-            coeffs = free_members_of_fun_expr[index]
-            dict_of_function_expressions[func_num] = create_function_with_coeffs(index, coeffs)
-    except ValueError:
-        st.error(f"Ошибка: неверный номер функции '{text}'")
+def function_1(u):
+    """Линейная функция: ax + b"""
+    if len(free_members_of_fun_expr) > 1:
+        coeffs = free_members_of_fun_expr[1]
+        return coeffs[0] * u + coeffs[1]
+    return u
 
-def create_function_with_coeffs(index, coeffs):
-    """Создание функции с конкретными коэффициентами"""
-    func_type = get_function_type(index)
+def function_2(u):
+    """Квадратный полином: ax² + bx + c"""
+    if len(free_members_of_fun_expr) > 2:
+        coeffs = free_members_of_fun_expr[2]
+        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+    return u
+
+def function_3(u):
+    """Линейная функция: ax + b"""
+    if len(free_members_of_fun_expr) > 3:
+        coeffs = free_members_of_fun_expr[3]
+        return coeffs[0] * u + coeffs[1]
+    return u
+
+def function_4(u):
+    """Квадратный полином: ax² + bx + c"""
+    if len(free_members_of_fun_expr) > 4:
+        coeffs = free_members_of_fun_expr[4]
+        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+    return u
+
+def function_5(u):
+    """Линейная функция: ax + b"""
+    if len(free_members_of_fun_expr) > 5:
+        coeffs = free_members_of_fun_expr[5]
+        return coeffs[0] * u + coeffs[1]
+    return u
+
+def function_6(u):
+    """Квадратный полином: ax² + bx + c"""
+    if len(free_members_of_fun_expr) > 6:
+        coeffs = free_members_of_fun_expr[6]
+        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+    return u
+
+def draw_functions_graphic(t, free_members):
+    """График 7 функций системы"""
+    fig, ax = plt.subplots(figsize=(12, 8))
     
-    if func_type == "polynomial_4":
-        def func(u):
-            return coeffs[0] * u**4 + coeffs[1] * u**3 + coeffs[2] * u**2 + coeffs[3] * u
-        return func
-        
-    elif func_type == "exponential":
-        def func(u):
-            if u <= 0:
-                u = 0.001  # избегаем деления на ноль
-            return math.exp(coeffs[0] + coeffs[1]/u + coeffs[2] * math.log10(u))
-        return func
-        
-    elif func_type == "polynomial_2":
-        def func(u):
-            return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
-        return func
-        
-    elif func_type == "linear":
-        def func(u):
-            return coeffs[0] * u + coeffs[1]
-        return func
-        
-    else:
-        def func(u):
-            return u
-        return func
-
-def get_function_description(index):
-    """Описание функции согласно PDF"""
-    descriptions = {
-        # Z1 функции
-        0: "f1: Число погибших людей от продолжительности поражающего воздействия (Z2)",
-        1: "f2: Число погибших людей от продолжительности аварийного периода (Z9)", 
-        2: "f3: Число погибших людей от ущерба административной единице (Z14)",
-        
-        # Z2 функции
-        3: "f4: Продолжительность поражающего воздействия от площади земель (Z7)",
-        4: "f5: Продолжительность поражающего воздействия от числа людей, утративших имущество (Z4)",
-        5: "f6: Продолжительность поражающего воздействия от числа пораженных животных (Z11)",
-        
-        # Z3 функции
-        6: "f7: Площадь зоны ЧС от числа погибших людей (Z1)",
-        7: "f8: Площадь зоны ЧС от площади земель (Z7)",
-        8: "f9: Площадь зоны ЧС от продолжительности аварийного периода (Z9)",
-        9: "f10: Площадь зоны ЧС от продолжительности поражающего воздействия (Z2)",
-        10: "f11: Площадь зоны ЧС от продолжительности восстановительного периода (Z10)",
-        
-        # Z4 функции
-        11: "f12: Число людей, утративших имущество, от числа погибших (Z1)",
-        12: "f13: Число людей, утративших имущество, от площади зоны ЧС (Z3)",
-        13: "f14: Число людей, утративших имущество, от ущерба коммерческой организации (Z5)",
-        14: "f15: Число людей, утративших имущество, от площади земель (Z7)",
-        15: "f16: Число людей, утративших имущество, от ущерба административной единице (Z14)",
-        
-        # Z5 функции
-        16: "f17: Ущерб коммерческой организации от объема загрязненного грунта (Z6)",
-        17: "f18: Ущерб коммерческой организации от снижения плодородия (Z8)",
-        18: "f19: Ущерб коммерческой организации от величины погибшего урожая (Z12)",
-        19: "f20: Ущерб коммерческой организации от продолжительности поражающего воздействия (Z2)",
-        20: "f21: Ущерб коммерческой организации от величины погибшего урожая (Z12)",
-        
-        # Z6 функции
-        21: "f22: Объем загрязненного грунта от числа людей, утративших имущество (Z4)",
-        22: "f23: Объем загрязненного грунта от площади земель (Z7)",
-        23: "f24: Объем загрязненного грунта от продолжительности аварийного периода (Z9)",
-        24: "f25: Объем загрязненного грунта от площади лесных массивов (Z13)",
-        25: "f26: Объем загрязненного грунта от продолжительности восстановительного периода (Z10)",
-        26: "f27: Объем загрязненного грунта от числа пораженных животных (Z11)",
-        27: "f28: Объем загрязненного грунта от величины погибшего урожая (Z12)",
-        
-        # Z7 функции
-        28: "f29: Площадь земель от продолжительности аварийного периода (Z9)",
-        
-        # Z8 функции
-        29: "f30: Снижение плодородия от объема загрязненного грунта (Z6)",
-        30: "f31: Снижение плодородия от числа пораженных животных (Z11)",
-        31: "f32: Снижение плодородия от числа людей, утративших имущество (Z4)",
-        32: "f33: Снижение плодородия от продолжительности восстановительного периода (Z10)",
-        33: "f34: Снижение плодородия от площади лесных массивов (Z13)",
-        
-        # Z9 функции
-        34: "f35: Продолжительность аварийного периода от числа людей, утративших имущество (Z4)",
-        35: "f36: Продолжительность аварийного периода от продолжительности поражающего воздействия (Z2)",
-        36: "f37: Продолжительность аварийного периода от ущерба коммерческой организации (Z5)",
-        37: "f38: Продолжительность аварийного периода от продолжительности восстановительного периода (Z10)",
-        
-        # Z10 функции
-        38: "f39: Продолжительность восстановительного периода от продолжительности поражающего воздействия (Z2)",
-        39: "f40: Продолжительность восстановительного периода от числа людей, утративших имущество (Z4)",
-        40: "f41: Продолжительность восстановительного периода от числа пораженных животных (Z11)",
-        41: "f42: Продолжительность восстановительного периода от величины погибшего урожая (Z12)",
-        42: "f43: Продолжительность восстановительного периода от ущерба административной единице (Z14)",
-        
-        # Z11 функции
-        43: "f44: Число пораженных животных от площади зоны ЧС (Z3)",
-        44: "f45: Число пораженных животных от площади земель (Z7)",
-        45: "f46: Число пораженных животных от продолжительности аварийного периода (Z9)",
-        46: "f47: Число пораженных животных от числа людей, утративших имущество (Z4)",
-        47: "f48: Число пораженных животных от площади лесных массивов (Z13)",
-        
-        # Z12 функции
-        48: "f49: Величина погибшего урожая от объема загрязненного грунта (Z6)",
-        49: "f50: Величина погибшего урожая от снижения плодородия (Z8)",
-        50: "f51: Величина погибшего урожая от площади лесных массивов (Z13)",
-        51: "f52: Величина погибшего урожая от числа погибших людей (Z1)",
-        52: "f53: Величина погибшего урожая от площади земель (Z7)",
-        53: "f54: Величина погибшего урожая от числа пораженных животных (Z11)",
-        
-        # Z13 функции
-        54: "f55: Площадь лесных массивов от площади земель (Z7)",
-        55: "f56: Площадь лесных массивов от площади зоны ЧС (Z3)",
-        56: "f57: Площадь лесных массивов от продолжительности аварийного периода (Z9)",
-        
-        # Z14 функции
-        57: "f58: Ущерб административной единице от продолжительности поражающего воздействия (Z2)",
-        58: "f59: Ущерб административной единице от площади зоны ЧС (Z3)",
-        59: "f60: Ущерб административной единице от ущерба коммерческой организации (Z5)",
-        60: "f61: Ущерб административной единице от снижения плодородия (Z8)",
-        61: "f62: Ущерб административной единице от числа пораженных животных (Z11)",
-        62: "f63: Ущерб административной единице от величины погибшего урожая (Z12)",
-        63: "f64: Ущерб административной единице от площади лесных массивов (Z13)",
-        64: "f65: Ущерб административной единице от площади земель (Z7)",
-        65: "f66: Ущерб административной единице от продолжительности аварийного периода (Z9)"
-    }
-    return descriptions.get(index, f"Функция f{index+1}")
-
-def get_function_type(index):
-    """Определение типа функции по индексу согласно PDF"""
-    polynomial_4_indices = [0, 1, 2, 7, 8, 22, 23, 24, 29, 30, 49, 52, 53, 58, 59, 60, 61, 62, 63, 64]
-    exponential_indices = [4, 5, 18, 19, 20, 21, 31, 32, 36, 41, 45, 46, 56, 57]
-    polynomial_2_indices = [3, 6, 9, 10, 14, 15, 25, 26, 27, 33, 34, 35, 37, 38, 39, 40, 42, 43, 44, 47, 48, 50, 51, 54, 55, 65]
-    linear_indices = [11, 12, 13, 16, 17, 28]
+    # Тестовые значения x для построения графиков функций
+    x = np.linspace(0, 1, 100)
     
-    if index in polynomial_4_indices:
-        return "polynomial_4"
-    elif index in exponential_indices:
-        return "exponential"
-    elif index in polynomial_2_indices:
-        return "polynomial_2"
-    elif index in linear_indices:
-        return "linear"
-    else:
-        return "linear"  # по умолчанию
-
-def get_default_coefficients(index):
-    """Возвращает коэффициенты по умолчанию для каждой функции"""
-    func_type = get_function_type(index)
+    # Строим графики для каждой функции
+    for i in range(min(7, len(free_members))):
+        coeffs = free_members[i]
+        if i == 0:  # Кубический полином
+            y = coeffs[0] * x**3 + coeffs[1] * x**2 + coeffs[2] * x + coeffs[3]
+            label = f'F{i+1}: Кубический полином'
+        elif i in [1, 3, 5]:  # Линейные функции
+            y = coeffs[0] * x + coeffs[1]
+            label = f'F{i+1}: Линейная функция'
+        else:  # Квадратные полиномы
+            y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2]
+            label = f'F{i+1}: Квадратный полином'
+        
+        ax.plot(x, y, label=label, linewidth=2)
     
-    if func_type == "polynomial_4":
-        return [0.1, 0.2, 0.3, 0.4]  # a, b, c, d для ax⁴ + bx³ + cx² + dx
-    elif func_type == "exponential":
-        return [0.5, 0.3, 0.2]  # const, coef1, coef2 для exp(const + coef1/x + coef2*log10(x))
-    elif func_type == "polynomial_2":
-        return [0.1, 0.2, 0.3]  # a, b, c для ax² + bx + c
-    elif func_type == "linear":
-        return [0.5, 0.1]  # a, b для ax + b
-    else:
-        return [0.5, 0.1]
-
-def draw_third_graphic(t):
-    """График возмущений для модели наводнения"""
-    global free_members_of_fun_expr
-    fig = plt.figure(figsize=(15, 10))
+    ax.set_xlabel('x')
+    ax.set_ylabel('F(x)')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
     
-    # Создаем графики для нескольких функций
-    if free_members_of_fun_expr:
-        for i in range(min(6, len(free_members_of_fun_expr))):
-            coeffs = free_members_of_fun_expr[i]
-            func_type = get_function_type(i)
-            
-            y_values = []
-            for x in t:
-                if func_type == "polynomial_4" and len(coeffs) >= 4:
-                    y = coeffs[0] * x**4 + coeffs[1] * x**3 + coeffs[2] * x**2 + coeffs[3] * x
-                elif func_type == "exponential" and len(coeffs) >= 3:
-                    y = math.exp(coeffs[0] + coeffs[1]/max(x, 0.001) + coeffs[2] * math.log10(max(x, 0.001)))
-                elif func_type == "polynomial_2" and len(coeffs) >= 3:
-                    y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2]
-                elif func_type == "linear" and len(coeffs) >= 2:
-                    y = coeffs[0] * x + coeffs[1]
-                else:
-                    y = x
-                y_values.append(y)
-            
-            plt.plot(t, y_values, label=f'f{i+1}(x)')
-    
-    plt.legend(loc='best')
-    plt.xlabel('Время')
-    plt.ylabel('Значение')
-    plt.title('Графики функций возмущений')
-    plt.grid()
     return fig
 
 def labels_array():
-    """Метки параметров модели наводнения"""
+    """Метки 14 параметров системы"""
     return [
         "Z1 - Число погибших людей",
         "Z2 - Продолжительность поражающего воздействия", 
@@ -251,7 +118,7 @@ def labels_array():
     ]
 
 def process_calculation(start_values, free_members):
-    """Основная функция расчета для модели наводнения"""
+    """Основная функция расчета системы дифференциальных уравнений"""
     global data_sol
     global free_members_of_fun_expr
     
@@ -260,36 +127,38 @@ def process_calculation(start_values, free_members):
     free_members_of_fun_expr = free_members
     t = np.linspace(0, 1, 80)
     
-    # Инициализируем функции с пользовательскими коэффициентами
-    for i in range(min(66, len(free_members))):
-        dict_of_function_expressions[i+1] = create_function_with_coeffs(i, free_members[i])
+    # Инициализация функций
+    init_default_functions()
     
-    # Упрощенная система уравнений для демонстрации
-    # В реальной реализации здесь должна быть полная система из PDF
+    # Упрощенная система дифференциальных уравнений
     def flood_model(u, t):
         dudt = []
         for i in range(14):
-            # Базовая динамика с затуханием и взаимовлиянием
-            change = -0.1 * u[i] + 0.02 * np.sum(u) / 14
+            # Базовая динамика системы с взаимовлиянием
+            change = -0.1 * u[i] + 0.015 * np.sum(u) / 14
             
-            # Добавляем влияние функций согласно модели
-            if i == 0:  # Z1 зависит от f1, f2, f3
+            # Добавляем влияние функций согласно системе уравнений
+            if i == 0:  # Z1 зависит от F1 (Z2)
                 if 1 in dict_of_function_expressions:
-                    change += 0.1 * dict_of_function_expressions[1](u[1])  # f1(Z2)
-                if 2 in dict_of_function_expressions:
-                    change += 0.1 * dict_of_function_expressions[2](u[8])  # f2(Z9)
-                if 3 in dict_of_function_expressions:
-                    change -= 0.05 * dict_of_function_expressions[3](u[13])  # f3(Z14)
+                    change += 0.05 * dict_of_function_expressions[1](u[1])
                     
-            elif i == 1:  # Z2 зависит от f4, f5, f6
+            elif i == 1:  # Z2 зависит от F2 (Z7) и F1 (Z4)
+                if 2 in dict_of_function_expressions:
+                    change += 0.03 * dict_of_function_expressions[2](u[6])
+                if 1 in dict_of_function_expressions:
+                    change -= 0.02 * dict_of_function_expressions[1](u[3])
+                    
+            elif i == 3:  # Z4 зависит от F4 (Z3)
                 if 4 in dict_of_function_expressions:
-                    change += 0.1 * dict_of_function_expressions[4](u[6])  # f4(Z7)
-                if 5 in dict_of_function_expressions:
-                    change -= 0.1 * dict_of_function_expressions[5](u[3])  # f5(Z4)
+                    change += 0.04 * dict_of_function_expressions[4](u[2])
+                    
+            elif i == 5:  # Z6 зависит от F6 (Z4)
                 if 6 in dict_of_function_expressions:
-                    change -= 0.1 * dict_of_function_expressions[6](u[10])  # f6(Z11)
-            
-            # Аналогично для других параметров...
+                    change += 0.03 * dict_of_function_expressions[6](u[3])
+                    
+            elif i == 6:  # Z7 зависит от F7 (Z9)
+                if 7 in dict_of_function_expressions:
+                    change += 0.02 * dict_of_function_expressions[7](u[8])
             
             dudt.append(change)
         return dudt
