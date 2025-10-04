@@ -12,7 +12,17 @@ class RadarDiagram:
         colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive']
         
         for idx, dataset in enumerate(data):
-            values = dataset.tolist()
+            # Убеждаемся, что данные имеют правильную длину
+            if len(dataset) != N:
+                # Если длина не совпадает, берем первые N элементов или дополняем нулями
+                if len(dataset) > N:
+                    values = dataset[:N].tolist()
+                else:
+                    values = dataset.tolist() + [0] * (N - len(dataset))
+            else:
+                values = dataset.tolist()
+            
+            # Замыкаем полигон
             values += values[:1]
             current_theta = theta.tolist() + theta[:1]
             
@@ -32,7 +42,10 @@ class RadarDiagram:
             ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0))
         
         # Настраиваем пределы для лучшего отображения
-        max_val = max([max(dataset) for dataset in data])
-        ax.set_ylim(0, max_val * 1.1)
+        try:
+            max_val = max([max(dataset) for dataset in data])
+            ax.set_ylim(0, max_val * 1.1)
+        except:
+            ax.set_ylim(0, 1)
         
         return fig

@@ -163,86 +163,83 @@ with tab3:
     if st.session_state.calculation_done and st.session_state.data_sol is not None:
         radar = RadarDiagram()
         data_sol = st.session_state.data_sol
-        labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         n = len(data_sol)
         
-        # Вычисляем индексы для промежуточных состояний
-        indices = {
-            'Начальный момент': 0,
-            '1/8 времени': n // 8,
-            '1/4 времени': n // 4, 
-            '3/8 времени': 3 * n // 8,
-            '1/2 времени': n // 2,
-            '5/8 времени': 5 * n // 8,
-            '3/4 времени': 3 * n // 4,
-            '7/8 времени': 7 * n // 8,
-            'Конечный момент': n - 1
-        }
+        # Упрощенные метки для избежания ошибок
+        simple_labels = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12", "Z13", "Z14"]
         
-        st.subheader("📊 Все состояния системы")
+        st.subheader("📊 Ключевые состояния системы")
         
-        # Создаем диаграмму со всеми состояниями
-        all_data = [data_sol[idx] for idx in indices.values()]
-        fig_all = radar.draw(all_data, labels, "Динамика системы во времени")
-        st.pyplot(fig_all)
+        # Безопасное создание промежуточных состояний
+        key_moments = [
+            ('Начальный момент', 0),
+            ('1/4 времени', max(1, n // 4)),
+            ('1/2 времени', max(1, n // 2)),
+            ('3/4 времени', max(1, 3 * n // 4)),
+            ('Конечный момент', max(1, n - 1))
+        ]
         
-        st.subheader("🔍 Детальный анализ по состояниям")
+        # Создаем данные для диаграммы
+        comparison_data = []
+        moment_names = []
         
-        # Показываем отдельные диаграммы для ключевых моментов
-        key_moments = {
-            'Начальный момент': 0,
-            '1/4 времени': n // 4,
-            '1/2 времени': n // 2,
-            '3/4 времени': 3 * n // 4,
-            'Конечный момент': n - 1
-        }
+        for name, idx in key_moments:
+            if idx < len(data_sol):
+                comparison_data.append(data_sol[idx])
+                moment_names.append(name)
         
-        cols = st.columns(3)
-        col_idx = 0
-        
-        for moment_name, idx in key_moments.items():
-            with cols[col_idx]:
-                st.write(f"**{moment_name}**")
-                fig_moment = radar.draw([data_sol[idx]], labels, f"t = {idx}/{n}")
-                st.pyplot(fig_moment)
-                
-                # Показываем значения параметров
-                with st.expander("Значения параметров"):
-                    for i, value in enumerate(data_sol[idx]):
-                        st.write(f"{labels[i]}: {value:.3f}")
-            
-            col_idx = (col_idx + 1) % 3
-            
-        st.subheader("📈 Сравнительный анализ")
-        
-        # Сравнение начального и конечного состояния
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Начальное vs Конечное состояние**")
-            fig_comparison = radar.draw([data_sol[0], data_sol[-1]], labels, 
-                                      "Сравнение начального и конечного состояния")
+        # Рисуем диаграмму сравнения
+        if len(comparison_data) > 0:
+            fig_comparison = radar.draw(comparison_data, simple_labels, "Сравнение состояний системы")
             st.pyplot(fig_comparison)
-            
-        with col2:
-            st.write("**Изменения параметров**")
+        
+        st.subheader("🔍 Детальный анализ")
+        
+        # Показываем отдельные диаграммы для каждого состояния
+        cols = st.columns(2)
+        
+        for i, (name, idx) in enumerate(key_moments):
+            if idx < len(data_sol):
+                with cols[i % 2]:
+                    st.write(f"**{name}** (шаг {idx})")
+                    
+                    # Создаем диаграмму для одного состояния
+                    fig_single = radar.draw([data_sol[idx]], simple_labels, f"{name}")
+                    st.pyplot(fig_single)
+                    
+                    # Показываем таблицу значений
+                    with st.expander("Значения параметров"):
+                        for j, value in enumerate(data_sol[idx]):
+                            param_name = simple_labels[j]
+                            st.metric(param_name, f"{value:.3f}")
+        
+        st.subheader("📈 Анализ изменений")
+        
+        if len(data_sol) > 1:
+            # График изменений от начального до конечного состояния
             changes = data_sol[-1] - data_sol[0]
             
-            # График изменений
-            fig_changes, ax = plt.subplots(figsize=(10, 6))
-            bars = ax.bar(range(14), changes, color=['red' if x < 0 else 'green' for x in changes])
-            ax.set_xlabel('Параметры')
-            ax.set_ylabel('Изменение')
+            fig_changes, ax = plt.subplots(figsize=(12, 6))
+            bars = ax.bar(range(14), changes, 
+                         color=['red' if x < 0 else 'green' for x in changes],
+                         alpha=0.7)
+            
+            ax.set_xlabel('Параметры системы')
+            ax.set_ylabel('Изменение значения')
             ax.set_title('Изменение параметров от начального до конечного состояния')
             ax.set_xticks(range(14))
-            ax.set_xticklabels([f'Z{i+1}' for i in range(14)], rotation=45)
+            ax.set_xticklabels(simple_labels, rotation=45)
             ax.grid(True, alpha=0.3)
             
-            # Добавляем значения на столбцы
+            # Добавляем подписи значений
             for bar, change in zip(bars, changes):
                 height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{change:+.3f}', ha='center', va='bottom' if height >= 0 else 'top')
+                ax.text(bar.get_x() + bar.get_width()/2., 
+                       height + (0.01 if height >= 0 else -0.01),
+                       f'{change:+.3f}', 
+                       ha='center', 
+                       va='bottom' if height >= 0 else 'top',
+                       fontweight='bold')
             
             st.pyplot(fig_changes)
             
