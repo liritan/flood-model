@@ -1,15 +1,29 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import odeint
+from radar_diagram import RadarDiagram
 import functions as functions
 import streamlit as st
+import gc
 
-dict_of_function_expressions = {}
+dict_of_function_expressions = dict()
 free_members_of_fun_expr = []
 data_sol = []
 
+
+def init():
+    """Инициализация функций"""
+    dict_of_function_expressions[1] = function_0
+    dict_of_function_expressions[2] = function_1
+    dict_of_function_expressions[3] = function_2
+    dict_of_function_expressions[4] = function_3
+    dict_of_function_expressions[5] = function_4
+    dict_of_function_expressions[6] = function_5
+    dict_of_function_expressions[7] = function_6
+
+
 def init_default_functions():
-    """Инициализация 7 функций по умолчанию"""
+    """Инициализация функций по умолчанию"""
     global dict_of_function_expressions
     dict_of_function_expressions.clear()
     dict_of_function_expressions[1] = function_0
@@ -20,86 +34,184 @@ def init_default_functions():
     dict_of_function_expressions[6] = function_5
     dict_of_function_expressions[7] = function_6
 
+
+def activatedCombox(index, text):
+    try:
+        func_num = int(text)
+        if index == 0:
+            dict_of_function_expressions[func_num] = function_0
+        elif index == 1:
+            dict_of_function_expressions[func_num] = function_1
+        elif index == 2:
+            dict_of_function_expressions[func_num] = function_2
+        elif index == 3:
+            dict_of_function_expressions[func_num] = function_3
+        elif index == 4:
+            dict_of_function_expressions[func_num] = function_4
+        elif index == 5:
+            dict_of_function_expressions[func_num] = function_5
+        elif index == 6:
+            dict_of_function_expressions[func_num] = function_6
+    except ValueError:
+        st.error(f"Ошибка: неверный номер функции '{text}'")
+
+
 def function_0(u):
-    """Кубический полином: ax³ + bx² + cx + d"""
     if len(free_members_of_fun_expr) > 0:
-        coeffs = free_members_of_fun_expr[0]
-        return coeffs[0] * u**3 + coeffs[1] * u**2 + coeffs[2] * u + coeffs[3]
+        return (free_members_of_fun_expr[0][0] * u ** 3 + 
+                free_members_of_fun_expr[0][1] * u ** 2 + 
+                free_members_of_fun_expr[0][2] * u + 
+                free_members_of_fun_expr[0][3])
     return u
+
 
 def function_1(u):
-    """Линейная функция: ax + b"""
     if len(free_members_of_fun_expr) > 1:
-        coeffs = free_members_of_fun_expr[1]
-        return coeffs[0] * u + coeffs[1]
+        return (free_members_of_fun_expr[1][0] * u + 
+                free_members_of_fun_expr[1][1])
     return u
+
 
 def function_2(u):
-    """Квадратный полином: ax² + bx + c"""
     if len(free_members_of_fun_expr) > 2:
-        coeffs = free_members_of_fun_expr[2]
-        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+        return (free_members_of_fun_expr[2][0] * u ** 2 + 
+                free_members_of_fun_expr[2][1] * u + 
+                free_members_of_fun_expr[2][2])
     return u
+
 
 def function_3(u):
-    """Линейная функция: ax + b"""
     if len(free_members_of_fun_expr) > 3:
-        coeffs = free_members_of_fun_expr[3]
-        return coeffs[0] * u + coeffs[1]
+        return (free_members_of_fun_expr[3][0] * u + 
+                free_members_of_fun_expr[3][1])
     return u
+
 
 def function_4(u):
-    """Квадратный полином: ax² + bx + c"""
     if len(free_members_of_fun_expr) > 4:
-        coeffs = free_members_of_fun_expr[4]
-        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+        return (free_members_of_fun_expr[4][0] * u ** 2 + 
+                free_members_of_fun_expr[4][1] * u + 
+                free_members_of_fun_expr[4][2])
     return u
+
 
 def function_5(u):
-    """Линейная функция: ax + b"""
     if len(free_members_of_fun_expr) > 5:
-        coeffs = free_members_of_fun_expr[5]
-        return coeffs[0] * u + coeffs[1]
+        return (free_members_of_fun_expr[5][0] * u + 
+                free_members_of_fun_expr[5][1])
     return u
+
 
 def function_6(u):
-    """Квадратный полином: ax² + bx + c"""
     if len(free_members_of_fun_expr) > 6:
-        coeffs = free_members_of_fun_expr[6]
-        return coeffs[0] * u**2 + coeffs[1] * u + coeffs[2]
+        return (free_members_of_fun_expr[6][0] * u ** 2 + 
+                free_members_of_fun_expr[6][1] * u + 
+                free_members_of_fun_expr[6][2])
     return u
 
-def draw_functions_graphic(t, free_members):
-    """График 7 функций системы"""
-    fig, ax = plt.subplots(figsize=(12, 8))
+
+def draw_third_graphic(t):
+    """График возмущений"""
+    global free_members_of_fun_expr
+    fig = plt.figure(figsize=(15, 10))
+    plt.subplot(1, 1, 1)
     
-    # Тестовые значения x для построения графиков функций
-    x = np.linspace(0, 1, 100)
+    if len(free_members_of_fun_expr) >= 6:
+        y1 = []
+        y2 = []
+        y3 = []
+        y4 = []
+        y5 = []
+        y6 = []
+        for i in t:
+            y1.append(free_members_of_fun_expr[0][0] * i**3 +
+                     free_members_of_fun_expr[0][1] * i**2 +
+                     free_members_of_fun_expr[0][2] * i +
+                     free_members_of_fun_expr[0][3])
+            y2.append(free_members_of_fun_expr[1][0] * i +
+                     free_members_of_fun_expr[1][1])
+            y3.append(free_members_of_fun_expr[2][0] * i**2 +
+                     free_members_of_fun_expr[2][1] * i +
+                     free_members_of_fun_expr[2][2])
+            y4.append(free_members_of_fun_expr[3][0] * i +
+                     free_members_of_fun_expr[3][1])
+            y5.append(free_members_of_fun_expr[4][0] * i**2 +
+                     free_members_of_fun_expr[4][1] * i +
+                     free_members_of_fun_expr[4][2])
+            y6.append(free_members_of_fun_expr[5][0] * i +
+                     free_members_of_fun_expr[5][1])
+        plt.plot(t, y1, label='F1')
+        plt.plot(t, y2, label='F2')
+        plt.plot(t, y3, label='F3')
+        plt.plot(t, y4, label='F4')
+        plt.plot(t, y5, label='F5')
+        plt.plot(t, y6, label='F6')
     
-    # Строим графики для каждой функции
-    for i in range(min(7, len(free_members))):
-        coeffs = free_members[i]
-        if i == 0:  # Кубический полином
-            y = coeffs[0] * x**3 + coeffs[1] * x**2 + coeffs[2] * x + coeffs[3]
-            label = f'F{i+1}: Кубический полином'
-        elif i in [1, 3, 5]:  # Линейные функции
-            y = coeffs[0] * x + coeffs[1]
-            label = f'F{i+1}: Линейная функция'
-        else:  # Квадратные полиномы
-            y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2]
-            label = f'F{i+1}: Квадратный полином'
-        
-        ax.plot(x, y, label=label, linewidth=2)
-    
-    ax.set_xlabel('x')
-    ax.set_ylabel('F(x)')
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    
+    plt.legend(loc='best')
+    plt.xlabel('t')
+    plt.ylabel('F(t)')
+    plt.title('Графики функций системы')
+    plt.grid()
     return fig
 
+
+def create_radar_diagrams(data, labels):
+    radar = RadarDiagram()
+    diagrams = []
+    
+    n = len(data)
+    moments = [
+        ([data[0]], "Характеристики системы в начальный момент времени"),
+        ([data[0], data[n // 4]], "Характеристики системы в 1 четверти"),
+        ([data[0], data[n // 2]], "Характеристики системы во 2 четверти"),
+        ([data[0], data[n - 1]], "Характеристики системы в последний момент времени")
+    ]
+    
+    for data_moment, title in moments:
+        fig = radar.draw(data_moment, labels, title)
+        diagrams.append((fig, title))
+    
+    return diagrams
+
+
+def process_function_list(num_functions):
+    new_function_list = []
+    for ind, expression in enumerate(functions.function_list):
+        new_expression = []
+        for ind2, part in enumerate(expression):
+            if isinstance(part, dict):
+                new_expression.append(np.intersect1d(list(part.keys()), num_functions))
+                functions.function_list[ind][ind2] = recreate(new_expression[ind2], part)
+            else:
+                new_expression.append(part)
+    
+    return new_function_list
+
+
+def recreate(new_expression, part):
+    new_part = {}
+    for ind in new_expression:
+        new_part[ind] = part[ind]
+    return new_part
+
+
+def create_graphic(t, data):
+    """График характеристик"""
+    fig, ax = plt.subplots(figsize=(15, 10))
+    labels = labels_array()
+    for i in range(14):
+        plt.plot(t, data[:, i], label=labels[i])
+    plt.legend(loc='best')
+    plt.xlabel('t')
+    plt.ylabel('Значение')
+    plt.title('Динамика параметров системы')
+    ax.legend(labels, loc=(.75, .64), labelspacing=0.1, fontsize='small')
+    plt.grid()
+    plt.xlim([0, 1])
+    return fig
+
+
 def labels_array():
-    """Метки 14 параметров системы"""
     return [
         "Z1 - Число погибших людей",
         "Z2 - Продолжительность поражающего воздействия", 
@@ -117,12 +229,14 @@ def labels_array():
         "Z14 - Ущерб административной единице"
     ]
 
+
 def process_calculation(start_values, free_members):
-    """Основная функция расчета системы дифференциальных уравнений"""
+    """Основная функция расчета"""
     global data_sol
     global free_members_of_fun_expr
     
     plt.close('all')
+    gc.collect()
 
     free_members_of_fun_expr = free_members
     t = np.linspace(0, 1, 80)
@@ -130,113 +244,100 @@ def process_calculation(start_values, free_members):
     # Инициализация функций
     init_default_functions()
     
-    # Сбалансированная система дифференциальных уравнений
-    def flood_model(u, t):
-        dudt = []
-        for i in range(14):
-            # Слабое затухание вместо сильного
-            base_change = -0.01 * u[i]  # Уменьшили затухание в 10 раз
-            
-            # Взаимовлияния между параметрами - больше положительных влияний
-            influence = 0
-            
-            # Z1 (погибшие) - медленно растет от воздействия
-            if i == 0:  # Z1
-                influence += 0.08 * u[1]  # растет от продолжительности воздействия
-                influence += 0.05 * u[2]  # растет от площади ЧС
-                if 1 in dict_of_function_expressions:
-                    influence += 0.03 * dict_of_function_expressions[1](u[1])
-                    
-            # Z2 (продолжительность) - стабилизируется
-            elif i == 1:  # Z2
-                influence += 0.06 * u[2]  # зависит от площади
-                influence += 0.04 * u[6]  # зависит от исключенных земель
-                influence -= 0.02 * u[9]  # уменьшается при восстановлении
-                if 2 in dict_of_function_expressions:
-                    influence += 0.02 * dict_of_function_expressions[2](u[6])
-                    
-            # Z3 (площадь) - медленно растет
-            elif i == 2:  # Z3
-                influence += 0.07 * u[1]  # растет от продолжительности
-                influence += 0.03 * u[5]  # растет от загрязнения
-                if 3 in dict_of_function_expressions:
-                    influence += 0.02 * dict_of_function_expressions[3](u[0])
-                    
-            # Z4 (утратившие имущество) - растет
-            elif i == 3:  # Z4
-                influence += 0.09 * u[2]  # сильно зависит от площади
-                influence += 0.04 * u[0]  # зависит от погибших
-                if 4 in dict_of_function_expressions:
-                    influence += 0.03 * dict_of_function_expressions[4](u[2])
-                    
-            # Z5 (ущерб организациям) - растет
-            elif i == 4:  # Z5
-                influence += 0.08 * u[3]  # зависит от утративших имущество
-                influence += 0.05 * u[6]  # зависит от исключенных земель
-                if 5 in dict_of_function_expressions:
-                    influence += 0.02 * dict_of_function_expressions[5](u[5])
-                    
-            # Z6 (загрязнение) - растет
-            elif i == 5:  # Z6
-                influence += 0.1 * u[2]   # сильно зависит от площади
-                influence += 0.04 * u[8]  # зависит от аварийного периода
-                if 6 in dict_of_function_expressions:
-                    influence += 0.03 * dict_of_function_expressions[6](u[3])
-                    
-            # Z7 (исключенные земли) - растет
-            elif i == 6:  # Z7
-                influence += 0.07 * u[5]  # зависит от загрязнения
-                influence += 0.05 * u[2]  # зависит от площади
-                    
-            # Z8 (снижение плодородия) - медленно растет
-            elif i == 7:  # Z8
-                influence += 0.06 * u[5]  # зависит от загрязнения
-                influence += 0.03 * u[6]  # зависит от исключенных земель
-                    
-            # Z9 (аварийный период) - стабилизируется
-            elif i == 8:  # Z9
-                influence += 0.05 * u[2]  # зависит от площади
-                influence += 0.04 * u[3]  # зависит от утративших имущество
-                influence -= 0.03 * u[9]  # переходит в восстановление
-                    
-            # Z10 (восстановительный период) - растет со временем
-            elif i == 9:  # Z10
-                influence += 0.02 * t     # растет со временем
-                influence += 0.03 * u[2]  # зависит от масштаба ЧС
-                influence += 0.02 * u[3]  # зависит от числа пострадавших
-                    
-            # Z11 (пораженные животные) - растет
-            elif i == 10:  # Z11
-                influence += 0.08 * u[2]  # зависит от площади
-                influence += 0.04 * u[6]  # зависит от исключенных земель
-                    
-            # Z12 (погибший урожай) - растет
-            elif i == 11:  # Z12
-                influence += 0.09 * u[2]  # сильно зависит от площади
-                influence += 0.05 * u[7]  # зависит от снижения плодородия
-                influence += 0.04 * u[5]  # зависит от загрязнения
-                    
-            # Z13 (лесные массивы) - медленно растет
-            elif i == 12:  # Z13
-                influence += 0.07 * u[2]  # зависит от площади
-                influence += 0.03 * u[5]  # зависит от загрязнения
-                    
-            # Z14 (ущерб администрации) - растет
-            elif i == 13:  # Z14
-                influence += 0.04 * np.sum(u[:13]) / 13  # зависит от всех параметров
-                influence += 0.03 * u[4]  # зависит от ущерба организациям
-            
-            # Балансируем систему - добавляем небольшие положительные смещения
-            balance = 0.01 * (1 - u[i])  # Стремление к значению 1
-            
-            dudt.append(base_change + influence + balance)
-        
-        return dudt
+    # Обрабатываем список функций
+    process_function_list(list(dict_of_function_expressions.keys()))
+
+    # Решаем систему уравнений
+    data_sol = odeint(functions.pend, start_values, t, 
+                     args=(dict_of_function_expressions, functions.function_list))
     
-    # Решаем систему
-    data_sol = odeint(flood_model, start_values, t)
+    # Гарантируем, что значения не нулевые
+    data_sol = np.clip(data_sol, 0.01, 1.0)
     
-    # Нормализуем значения чтобы они не уходили в ноль
-    data_sol = np.clip(data_sol, 0.001, 1.0)
+    gc.collect()
     
     return t, data_sol
+def draw_third_graphic(t):
+    """График возмущений"""
+    global free_members_of_fun_expr
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    if free_members_of_fun_expr and len(free_members_of_fun_expr) >= 6:
+        y1 = []
+        y2 = []
+        y3 = []
+        y4 = []
+        y5 = []
+        y6 = []
+        
+        for time_val in t:
+            # F1: Кубический полином
+            if len(free_members_of_fun_expr[0]) >= 4:
+                y1.append(free_members_of_fun_expr[0][0] * time_val**3 +
+                         free_members_of_fun_expr[0][1] * time_val**2 +
+                         free_members_of_fun_expr[0][2] * time_val +
+                         free_members_of_fun_expr[0][3])
+            else:
+                y1.append(time_val)
+            
+            # F2: Линейная функция
+            if len(free_members_of_fun_expr[1]) >= 2:
+                y2.append(free_members_of_fun_expr[1][0] * time_val +
+                         free_members_of_fun_expr[1][1])
+            else:
+                y2.append(time_val)
+            
+            # F3: Квадратный полином
+            if len(free_members_of_fun_expr[2]) >= 3:
+                y3.append(free_members_of_fun_expr[2][0] * time_val**2 +
+                         free_members_of_fun_expr[2][1] * time_val +
+                         free_members_of_fun_expr[2][2])
+            else:
+                y3.append(time_val)
+            
+            # F4: Линейная функция
+            if len(free_members_of_fun_expr[3]) >= 2:
+                y4.append(free_members_of_fun_expr[3][0] * time_val +
+                         free_members_of_fun_expr[3][1])
+            else:
+                y4.append(time_val)
+            
+            # F5: Квадратный полином
+            if len(free_members_of_fun_expr[4]) >= 3:
+                y5.append(free_members_of_fun_expr[4][0] * time_val**2 +
+                         free_members_of_fun_expr[4][1] * time_val +
+                         free_members_of_fun_expr[4][2])
+            else:
+                y5.append(time_val)
+            
+            # F6: Линейная функция
+            if len(free_members_of_fun_expr[5]) >= 2:
+                y6.append(free_members_of_fun_expr[5][0] * time_val +
+                         free_members_of_fun_expr[5][1])
+            else:
+                y6.append(time_val)
+        
+        # Рисуем графики
+        ax.plot(t, y1, label='F1: Кубический полином', linewidth=2)
+        ax.plot(t, y2, label='F2: Линейная функция', linewidth=2)
+        ax.plot(t, y3, label='F3: Квадратный полином', linewidth=2)
+        ax.plot(t, y4, label='F4: Линейная функция', linewidth=2)
+        ax.plot(t, y5, label='F5: Квадратный полином', linewidth=2)
+        ax.plot(t, y6, label='F6: Линейная функция', linewidth=2)
+    
+    else:
+        # Если нет данных, показываем демо-графики
+        ax.plot(t, np.sin(2 * np.pi * t), label='F1: Демо функция 1', linewidth=2)
+        ax.plot(t, np.cos(2 * np.pi * t), label='F2: Демо функция 2', linewidth=2)
+        ax.plot(t, t**2, label='F3: Демо функция 3', linewidth=2)
+        ax.plot(t, np.sqrt(t), label='F4: Демо функция 4', linewidth=2)
+        ax.plot(t, np.exp(t) / np.exp(1), label='F5: Демо функция 5', linewidth=2)
+        ax.plot(t, 1 - t, label='F6: Демо функция 6', linewidth=2)
+    
+    ax.legend(loc='best')
+    ax.set_xlabel('Время')
+    ax.set_ylabel('Значение функции')
+    ax.set_title('Графики функций системы')
+    ax.grid(True, alpha=0.3)
+    
+    return fig
