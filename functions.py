@@ -1,168 +1,208 @@
-# functions_flood.py
-import numpy as np
-import math
+def pend(x, t, faks, f, xm):
+    S = lambda: f3(t, faks[0])
+    F = lambda: f3(t, faks[1])
+    G = lambda: f3(t, faks[2])
+    T = lambda: f3(t, faks[3])
+    A = lambda: f3(t, faks[4])
+    D = lambda: f3(t, faks[5])
+    I = lambda: f3(t, faks[6])
+    P = faks[7][3]
+    C = faks[8][3]
 
-# Полная структура взаимовлияний согласно PDF
-function_list = np.array([
-    # Z1: Число погибших людей
-    [
-        {1: 1},  # положительное влияние от f1(Z2)
-        {2: 8, 3: 13}  # положительное от f2(Z9), отрицательное от f3(Z14)
-    ],
-    # Z2: Продолжительность поражающего воздействия
-    [
-        {4: 6},  # положительное от f4(Z7)
-        {5: 3, 6: 10}  # отрицательное от f5(Z4), f6(Z11)
-    ],
-    # Z3: Площадь зоны ЧС
-    [
-        {7: 0, 8: 6, 9: 8},  # положительное от f7(Z1), f8(Z7), f9(Z9)
-        {10: 1, 11: 9}  # отрицательное от f10(Z2), f11(Z10)
-    ],
-    # Z4: Число людей, утративших имущество
-    [
-        {12: 0, 13: 2, 14: 6, 15: 6, 16: 13},  # положительное влияние
-        {}  # отрицательное влияние
-    ],
-    # Z5: Ущерб коммерческой организации
-    [
-        {17: 5, 18: 7, 19: 11},  # положительное
-        {20: 1, 21: 11}  # отрицательное
-    ],
-    # Z6: Объем загрязненного грунта
-    [
-        {22: 3, 23: 6, 24: 8, 25: 12},  # положительное
-        {26: 9, 27: 10, 28: 11}  # отрицательное
-    ],
-    # Z7: Площадь земель, исключенных из оборота
-    [
-        {29: 8},  # положительное
-        {}  # отрицательное
-    ],
-    # Z8: Снижение плодородия земель
-    [
-        {30: 5, 31: 10},  # положительное
-        {32: 3, 33: 9, 34: 12}  # отрицательное
-    ],
-    # Z9: Продолжительность аварийного периода
-    [
-        {35: 3},  # положительное
-        {36: 1, 37: 4, 38: 9}  # отрицательное
-    ],
-    # Z10: Продолжительность восстановительного периода
-    [
-        {39: 1, 40: 3, 41: 10, 42: 11, 43: 13},  # положительное
-        {}  # отрицательное
-    ],
-    # Z11: Число пораженных сельхоз животных
-    [
-        {44: 2, 45: 6, 46: 8},  # положительное
-        {47: 3, 48: 12}  # отрицательное
-    ],
-    # Z12: Величина погибшего урожая
-    [
-        {49: 5, 50: 7, 51: 12},  # положительное
-        {52: 0, 53: 6, 54: 10}  # отрицательное
-    ],
-    # Z13: Площадь уничтоженных лесных массивов
-    [
-        {55: 6},  # положительное
-        {56: 2, 57: 8}  # отрицательное
-    ],
-    # Z14: Ущерб административной единице
-    [
-        {58: 1, 59: 2, 60: 4, 61: 7, 62: 10, 63: 11, 64: 12},  # положительное
-        {65: 6, 66: 8}  # отрицательное
+    dkdt = [
+        # 0
+        (
+                (1 / xm[0]) * f3(S(), f[0]) * f0x8(x, f[1])
+        ),
+
+        # 1
+        (
+                (1 / xm[1]) * F() * G() * f3(S(), f[2]) * f0x8(x, f[3]) - f0x1(x, f[4]) * f0x7(x, f[5])
+        ),
+
+        # 2
+        (
+                (1 / xm[2]) * f0x8(x, f[6]) * f0x1(x, f[7])
+        ),
+
+        # 3
+        (
+                (1 / xm[3]) * F() * G() * T() * f0x8(x, f[8]) * f0x7(x, f[9]) * f0x1(x, f[10])
+        ),
+
+        # 4
+        (
+                (1 / xm[4]) * A() * f3(S(), f[11]) - f0x1(x, f[12]) * f0x7(x, f[13])
+        ),
+
+        # 5
+        (
+                (1 / xm[5]) * f3(S(), f[14]) * f0x8(x, f[15])
+        ),
+
+        # 6
+        (
+                (1 / xm[6]) * f0x1(x, f[16])
+        ),
+
+        # 7
+        (
+                (1 / xm[7]) * D() * f3(S(), f[17]) - f0x4(x, f[18])
+        ),
+
+        # 8
+        (
+                (1 / xm[8]) * I() * f3(S(), f[19]) - f0x1(x, f[20]) * f0x7(x, f[21])
+        ),
+
+        # 9
+        (
+                (1 / xm[9]) * F() * G() * T() * f3(S(), f[22]) * f0x1(x, f[23]) * f0x7(x, f[24])
+        ),
+
+        # 10
+        (
+                (1 / xm[10]) * P * C * F() * G() * D() * f3(S(), f[25]) * f0x6(x, f[26])
+        ),
+
+        # 11
+        (
+                (1 * xm[11]) * f0x11(x, f[27])
+        )
     ]
-], dtype=object)
+    return dkdt
 
-# Функции возмущений времени
-def fak_1(t):
-    return t**2 + 1
 
-def fak_2(t):
-    return np.cos(1.5 * t * np.pi - np.pi / 6) ** 2 / 4 + 0.2
+def fx(x, params):
+    return params[0] * x ** 4 + params[1] * x ** 3 + params[2] * x ** 2 + params[3] * x + params[4]
 
-def fak_3(t):
-    return np.sin(t * np.pi - np.pi / 6) / 2.5 + 0.3
 
-def fak_4(t):
-    return 2*t - 1
+def f3(x, params):
+    return params[0] * x ** 3 + params[1] * x ** 2 + params[2] * x + params[3]
 
-def fak_5(t):
-    return np.cos(1.5 * t * np.pi - np.pi / 6) ** 2 / 4
 
-def fak_6(t):
-    return np.sin(t * np.pi - np.pi / 6) ** 2 / 2.5 + 0.3
+def f0x8(t, p):
+    x = x8(t)
+    return fx(x, p)
 
-def process_part_of_expression(u, fak_list, t, dict_of_function_expressions, new_function_list, index_expression, index_side):
-    """Обработка части выражения для системы дифференциальных уравнений"""
-    result = 1
-    result_fak = 0
 
-    for num_function in new_function_list[index_expression][index_side]:
-        result *= dict_of_function_expressions[num_function](u[new_function_list[index_expression][index_side][num_function]])
-    for fak in fak_list:
-        result_fak += fak(t)
-    return result * result_fak
+def f0x1(t, p):
+    x = x1(t)
+    return fx(x, p)
 
-def pend(u, t, dict_of_function_expressions, new_function_list):
-    """Полная система дифференциальных уравнений для модели наводнения"""
-    dudt = [
-        # Z1: Число погибших людей
-        (process_part_of_expression(u, [fak_1, fak_2, fak_6], t, dict_of_function_expressions, new_function_list, 0, 0)
-         - process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 0, 1)),
 
-        # Z2: Продолжительность поражающего воздействия
-        (process_part_of_expression(u, [fak_1, fak_5], t, dict_of_function_expressions, new_function_list, 1, 0)
-         - process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 1, 1)),
+def f0x7(t, p):
+    x = x7(t)
+    return fx(x, p)
 
-        # Z3: Площадь зоны ЧС
-        (process_part_of_expression(u, [fak_1, fak_5], t, dict_of_function_expressions, new_function_list, 2, 0)
-         - process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 2, 1)),
 
-        # Z4: Число людей, утративших имущество
-        (process_part_of_expression(u, [fak_1, fak_2, fak_5, fak_6], t, dict_of_function_expressions, new_function_list, 3, 0)
-         - process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 3, 1)),
+def f0x4(t, p):
+    x = x4(t)
+    return fx(x, p)
 
-        # Z5: Ущерб коммерческой организации
-        (process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 4, 0)
-         - process_part_of_expression(u, [fak_3], t, dict_of_function_expressions, new_function_list, 4, 1)),
 
-        # Z6: Объем загрязненного грунта
-        (process_part_of_expression(u, [fak_1, fak_2], t, dict_of_function_expressions, new_function_list, 5, 0)
-         - process_part_of_expression(u, [fak_3], t, dict_of_function_expressions, new_function_list, 5, 1)),
+def f0x6(t, p):
+    x = x6(t)
+    return fx(x, p)
 
-        # Z7: Площадь земель, исключенных из оборота
-        (process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 6, 0)
-         - process_part_of_expression(u, [fak_1, fak_2], t, dict_of_function_expressions, new_function_list, 6, 1)),
 
-        # Z8: Снижение плодородия земель
-        (process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 7, 0)
-         - process_part_of_expression(u, [fak_1, fak_2], t, dict_of_function_expressions, new_function_list, 7, 1)),
+def f0x11(t, p):
+    x = x11(t)
+    return fx(x, p)
 
-        # Z9: Продолжительность аварийного периода
-        (process_part_of_expression(u, [fak_4], t, dict_of_function_expressions, new_function_list, 8, 0)
-         - process_part_of_expression(u, [fak_5, fak_6], t, dict_of_function_expressions, new_function_list, 8, 1)),
 
-        # Z10: Продолжительность восстановительного периода
-        (process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 9, 0)
-         - process_part_of_expression(u, [fak_1], t, dict_of_function_expressions, new_function_list, 9, 1)),
+def x1(t):
+    return fx1(t[0])
 
-        # Z11: Число пораженных сельхоз животных
-        (process_part_of_expression(u, [fak_3], t, dict_of_function_expressions, new_function_list, 10, 0)
-         - process_part_of_expression(u, [fak_1], t, dict_of_function_expressions, new_function_list, 10, 1)),
 
-        # Z12: Величина погибшего урожая
-        (process_part_of_expression(u, [fak_3], t, dict_of_function_expressions, new_function_list, 11, 0)
-         - process_part_of_expression(u, [fak_1, fak_5], t, dict_of_function_expressions, new_function_list, 11, 1)),
+def x2(t):
+    return fx2(t[1])
 
-        # Z13: Площадь уничтоженных лесных массивов
-        (process_part_of_expression(u, [], t, dict_of_function_expressions, new_function_list, 12, 0)
-         - process_part_of_expression(u, [fak_1], t, dict_of_function_expressions, new_function_list, 12, 1)),
 
-        # Z14: Ущерб административной единице
-        (process_part_of_expression(u, [fak_3], t, dict_of_function_expressions, new_function_list, 13, 0)
-         - process_part_of_expression(u, [fak_1], t, dict_of_function_expressions, new_function_list, 13, 1))
-    ]
-    return dudt
+def x3(t):
+    return fx3(t[2])
+
+
+def x4(t):
+    return fx4(t[3])
+
+
+def x5(t):
+    return fx5(t[4])
+
+
+def x6(t):
+    return fx6(t[5])
+
+
+def x7(t):
+    return fx7(t[6])
+
+
+def x8(t):
+    return fx8(t[7])
+
+
+def x9(t):
+    return fx9(t[8])
+
+
+def x10(t):
+    return fx10(t[9])
+
+
+def x11(t):
+    return fx11(t[10])
+
+
+def x12(t):
+    return fx12(t[11])
+
+
+def fx1(t):
+    return 0.001 * t ** 3 + 0.0665 * t ** 2 - 0.0345 * t - 0.008
+
+
+def fx2(t):
+    return -0.0536 * t ** 3 + 0.4455 * t ** 2 - 0.786 * t + 0.447
+
+
+def fx3(t):
+    return -0.011 * t ** 3 + 0.151 * t ** 2 - 0.14 * t + 0.25
+
+
+def fx4(t):
+    return 0.0923 * t ** 3 - 0.859 * t ** 2 + 2.6156 * t - 1.849
+
+
+def fx5(t):
+    return -0.04 * t ** 3 + 0.288 * t ** 2 - 0.187 * t + 0.239
+
+
+def fx6(t):
+    return -0.0063 * t ** 3 + 0.104 * t ** 2 + 0.107 * t + 0.045
+
+
+def fx7(t):
+    return 0.03 * t ** 3 - 0.032 * t ** 2 + 0.01 * t + 0.023
+
+
+def fx8(t):
+    return 0.0132 * t ** 3 - 0.0245 * t ** 2 + 0.245 * t - 0.067
+
+
+def fx9(t):
+    return -0.009 * t ** 3 + 0.1115 * t ** 2 - 0.06 * t - 0.038
+
+
+def fx10(t):
+    return 0.16 * t ** 3 - 1.5 * t ** 2 + 4.57 * t - 3.23
+
+
+def fx11(t):
+    return 0.004 * t ** 3 + 0.01 * t ** 2 + 0.21 * t - 0.22
+
+
+def fx12(t):
+    return 0.034 * t ** 3 - 0.127 * t ** 2 + 0.24 * t
+

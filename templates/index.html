@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Параметры системы</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+<div>
+    <header>
+        <ul class="nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="/">Параметры</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/graphic">График</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/diagrams">Диаграммы</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/facks">Возмущения</a>
+            </li>
+        </ul>
+    </header>
+    <div class="all">
+    <div class="container">
+        <!-- Первая строка: Характеристики и Уравнения -->
+        <div class="top-row">
+            <!-- Характеристики -->
+            <div>
+                <h5>Характеристики системы</h5>
+                <div class="container-scroll scroll-2">
+                    {% for x in faks %}
+                    <div class="block-function">
+                        <span>{{ x }}(t) = </span>
+                        <input class="faks-input" id="faks-{{ loop.index }}-1" type="text" placeholder="a">
+                        <span>t³ + </span>
+                        <input class="faks-input" id="faks-{{ loop.index }}-2" type="text" placeholder="b">
+                        <span>t² + </span>
+                        <input class="faks-input" id="faks-{{ loop.index }}-3" type="text" placeholder="c">
+                        <span>t + </span>
+                        <input class="faks-input" id="faks-{{ loop.index }}-4" type="text" placeholder="d">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Уравнения -->
+            <div>
+                <h5>Уравнения системы</h5>
+                <div class="container-scroll scroll-2">
+                    {% for x in equations %}
+                    <div class="block-function">
+                        {% if 's' in x %}
+                            <span>{{ x }}(s) = </span>
+                        {% else %}
+                            <span>{{ x }}(x) = </span>
+                        {% endif %}
+                        <input class="equation-input" id="equations-{{ loop.index }}-1" type="text" placeholder="a">
+                        <span>s⁴ + </span>
+                        <input class="equation-input" id="equations-{{ loop.index }}-2" type="text" placeholder="b">
+                        <span>s³ + </span>
+                        <input class="equation-input" id="equations-{{ loop.index }}-3" type="text" placeholder="c">
+                        <span>s² + </span>
+                        <input class="equation-input" id="equations-{{ loop.index }}-4" type="text" placeholder="d">
+                        <span>s + </span>
+                        <input class="equation-input" id="equations-{{ loop.index }}-5" type="text" placeholder="e">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Центрированный блок: Начальные условия -->
+      
+        <div class="center-row">
+            <div class="centered-section initial-conditions">
+                <h5>Начальные условия</h5>
+                <div class="container-scroll scroll-1">
+                    {% for x in initial_equations %}
+                    <div class="block-function border-function">
+                        <div class="param-header">
+                            <span class="param-number">X{{ loop.index }}</span>
+                            <span class="param-label">{{ x }}</span>
+                        </div>
+                        <div class="param-row">
+                            <span class="param-value-label">Начальное значение:</span>
+                            <input class="init-input" id="init-eq-{{ loop.index }}" type="text" placeholder="0.0">
+                        </div>
+                        <div class="restriction-row">
+                            <span>Предельное значение:</span>
+                            <input class="init-input" id="restrictions-{{ loop.index }}" type="text" value="1.0">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <!-- Блок управления под начальными условиями -->
+        <div class="control-row">
+            <div class="control-section">
+                <div class="control-panel">
+                    <h5>Управление расчетами</h5>
+                    <div class="control-buttons">
+                        <span>Статус:</span>
+                        <input type="text" readonly id="status-input">
+                        <button onclick="process()">Вычислить</button>
+                        <button onclick="refill()">Обновить значения</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script src="/static/js/script.js"></script>
+</body>
+</html>
