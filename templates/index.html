@@ -1,113 +1,992 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Параметры системы</title>
-    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet" />
+    <style>
+        /* Дополнительные стили для нового макета */
+        .top-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .half-width-col {
+            width: calc(50% - 5px);
+            display: flex;
+            flex-direction: column; /* Колонка внутри колонки */
+            height:800px;
+        }
+
+        .block-function {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+
+        .faks-input, .equation-input {
+            width: 50px;
+            padding: 2px;
+            margin: 0;
+            text-align: center;
+        }
+
+        .u-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .u-header-row, .u-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .u-header-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .u-col {
+            flex: 1;
+            text-align: center;
+        }
+        .u-col.label {
+            flex: 2;
+            text-align: left;
+            padding-left: 10px;
+        }
+        .u-row input {
+            width: 60px;
+            padding: 4px;
+            margin: 0 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .ulabel {
+            flex: 2;
+            text-align: left;
+            padding-left: 10px;
+        }
+        /* Стили для контейнера уравнений с прокруткой */
+        .equations-container {
+            /* Занимает всё доступное пространство внутри half-width-col */
+            flex: 1;
+            overflow-y: auto; /* Вертикальная прокрутка */
+            overflow-x: auto; /* Горизонтальная прокрутка для длинных уравнений */
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        /* Прокрутка для характеристик (для единообразия) */
+        .characteristics-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        /* Стили для компактного блока начальных условий */
+        .compact-initial-container {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .compact-initial-header {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f0f0f0;
+            font-weight: bold;
+            padding: 8px 0;
+            margin-bottom: 8px;
+        }
+        .compact-initial-header .label-col {
+            flex: 2;
+            padding-left: 10px;
+        }
+        .compact-initial-header .value-col,
+        .compact-initial-header .limit-col {
+            flex: 1;
+            text-align: center;
+        }
+        .compact-initial-row {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .compact-initial-row .label-col {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 10px;
+        }
+        .compact-initial-row .value-col,
+        .compact-initial-row .limit-col {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .compact-initial-row input {
+            width: 60px;
+            padding: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Стили для легковесного блока управления */
+        .control-panel-light {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-line span {
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .status-line input {
+            width: 120px;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            font-size: 13px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-calculate,
+        .btn-refresh {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-calculate {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-calculate:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-refresh {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background-color: #545b62;
+        }
+    </style>
 </head>
 <body>
 <div>
-    <header>
-        <ul class="nav-tabs">
-            <li class="nav-item">
-                <a class="nav-link active" href="/">Параметры</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/graphic">График</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/diagrams">Диаграммы</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/facks">Возмущения</a>
-            </li>
-        </ul>
-    </header>
-    <div class="all">
-    <div class="container">
-        <!-- Первая строка: Характеристики и Уравнения -->
-        <div class="top-row">
-            <!-- Характеристики -->
-            <div>
-                <h5>Характеристики системы</h5>
-                <div class="container-scroll scroll-2">
-                    {% for x in faks %}
-                    <div class="block-function">
-                        <span>{{ x }}(t) = </span>
-                        <input class="faks-input" id="faks-{{ loop.index }}-1" type="text" placeholder="a">
-                        <span>t³ + </span>
-                        <input class="faks-input" id="faks-{{ loop.index }}-2" type="text" placeholder="b">
-                        <span>t² + </span>
-                        <input class="faks-input" id="faks-{{ loop.index }}-3" type="text" placeholder="c">
-                        <span>t + </span>
-                        <input class="faks-input" id="faks-{{ loop.index }}-4" type="text" placeholder="d">
-                    </div>
-                    {% endfor %}
+<header>
+    <ul class="nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="/">Параметры</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/graphic">График</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/diagrams">Диаграммы</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/facks">Возмущения</a>
+        </li>
+    </ul>
+</header>
+<div class="all">
+<div class="container">
+    <!-- Первая строка: Характеристики и Уравнения -->
+    <div class="top-row">
+        <!-- Характеристики (левый блок) -->
+        <div class="half-width-col">
+            <h5>Характеристики системы</h5>
+            <div class="characteristics-container">
+                {% for x in faks %}
+                <div class="block-function">
+                    <span>{{ x }}(t) = </span>
+                    <input class="faks-input" id="faks-{{ loop.index }}-1" type="text" placeholder="a" />
+                    <span>t³ + </span>
+                    <input class="faks-input" id="faks-{{ loop.index }}-2" type="text" placeholder="b" />
+                    <span>t² + </span>
+                    <input class="faks-input" id="faks-{{ loop.index }}-3" type="text" placeholder="c" />
+                    <span>t + </span>
+                    <input class="faks-input" id="faks-{{ loop.index }}-4" type="text" placeholder="d" />
                 </div>
-            </div>
-
-            <!-- Уравнения -->
-            <div>
-                <h5>Уравнения системы</h5>
-                <div class="container-scroll scroll-2">
-                    {% for x in equations %}
-                    <div class="block-function">
-                        {% if 's' in x %}
-                            <span>{{ x }}(s) = </span>
-                        {% else %}
-                            <span>{{ x }}(x) = </span>
-                        {% endif %}
-                        <input class="equation-input" id="equations-{{ loop.index }}-1" type="text" placeholder="a">
-                        <span>s⁴ + </span>
-                        <input class="equation-input" id="equations-{{ loop.index }}-2" type="text" placeholder="b">
-                        <span>s³ + </span>
-                        <input class="equation-input" id="equations-{{ loop.index }}-3" type="text" placeholder="c">
-                        <span>s² + </span>
-                        <input class="equation-input" id="equations-{{ loop.index }}-4" type="text" placeholder="d">
-                        <span>s + </span>
-                        <input class="equation-input" id="equations-{{ loop.index }}-5" type="text" placeholder="e">
-                    </div>
-                    {% endfor %}
-                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Центрированный блок: Начальные условия -->
-      
-        <div class="center-row">
-            <div class="centered-section initial-conditions">
-                <h5>Начальные условия</h5>
-                <div class="container-scroll scroll-1">
-                    {% for x in initial_equations %}
-                    <div class="block-function border-function">
-                        <div class="param-header">
-                            <span class="param-number">X{{ loop.index }}</span>
-                            <span class="param-label">{{ x }}</span>
-                        </div>
-                        <div class="param-row">
-                            <span class="param-value-label">Начальное значение:</span>
-                            <input class="init-input" id="init-eq-{{ loop.index }}" type="text" placeholder="0.0">
-                        </div>
-                        <div class="restriction-row">
-                            <span>Предельное значение:</span>
-                            <input class="init-input" id="restrictions-{{ loop.index }}" type="text" value="1.0">
-                        </div>
-                    </div>
-                    {% endfor %}
+        <!-- Уравнения (правый блок) -->
+        <div class="half-width-col">
+            <h5>Уравнения системы</h5>
+            <div class="equations-container">
+                {% for x in equations %}
+                <div class="block-function">
+                    <!-- Название -->
+                    {% if loop.index == 1 %}
+                        <span>f<sub>1</sub>(Z<sub>2</sub>) = </span>
+                    {% elif loop.index == 2 %}
+                        <span>f<sub>2</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 3 %}
+                        <span>f<sub>3</sub>(Z<sub>14</sub>) = </span>
+                    {% elif loop.index == 4 %}
+                        <span>f<sub>4</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 5 %}
+                        <span>f<sub>5</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 6 %}
+                        <span>f<sub>6</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 7 %}
+                        <span>f<sub>7</sub>(Z<sub>1</sub>) = </span>
+                    {% elif loop.index == 8 %}
+                        <span>f<sub>8</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 9 %}
+                        <span>f<sub>9</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 10 %}
+                        <span>f<sub>10</sub>(Z<sub>2</sub>) = </span>
+                    {% elif loop.index == 11 %}
+                        <span>f<sub>11</sub>(Z<sub>10</sub>) = </span>
+                    {% elif loop.index == 12 %}
+                        <span>f<sub>12</sub>(Z<sub>1</sub>) = </span>
+                    {% elif loop.index == 13 %}
+                        <span>f<sub>13</sub>(Z<sub>3</sub>) = </span>
+                    {% elif loop.index == 14 %}
+                        <span>f<sub>14</sub>(Z<sub>5</sub>) = </span>
+                    {% elif loop.index == 15 %}
+                        <span>f<sub>15</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 16 %}
+                        <span>f<sub>16</sub>(Z<sub>14</sub>) = </span>
+                    {% elif loop.index == 17 %}
+                        <span>f<sub>17</sub>(Z<sub>6</sub>) = </span>
+                    {% elif loop.index == 18 %}
+                        <span>f<sub>18</sub>(Z<sub>8</sub>) = </span>
+                    {% elif loop.index == 19 %}
+                        <span>f<sub>19</sub>(Z<sub>12</sub>) = </span>
+                    {% elif loop.index == 20 %}
+                        <span>f<sub>20</sub>(Z<sub>2</sub>) = </span>
+                    {% elif loop.index == 21 %}
+                        <span>f<sub>21</sub>(Z<sub>12</sub>) = </span>
+                    {% elif loop.index == 22 %}
+                        <span>f<sub>22</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 23 %}
+                        <span>f<sub>23</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 24 %}
+                        <span>f<sub>24</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 25 %}
+                        <span>f<sub>25</sub>(Z<sub>13</sub>) = </span>
+                    {% elif loop.index == 26 %}
+                        <span>f<sub>26</sub>(Z<sub>10</sub>) = </span>
+                    {% elif loop.index == 27 %}
+                        <span>f<sub>27</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 28 %}
+                        <span>f<sub>28</sub>(Z<sub>12</sub>) = </span>
+                    {% elif loop.index == 29 %}
+                        <span>f<sub>29</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 30 %}
+                        <span>f<sub>30</sub>(Z<sub>6</sub>) = </span>
+                    {% elif loop.index == 31 %}
+                        <span>f<sub>31</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 32 %}
+                        <span>f<sub>32</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 33 %}
+                        <span>f<sub>33</sub>(Z<sub>10</sub>) = </span>
+                    {% elif loop.index == 34 %}
+                        <span>f<sub>34</sub>(Z<sub>13</sub>) = </span>
+                    {% elif loop.index == 35 %}
+                        <span>f<sub>35</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 36 %}
+                        <span>f<sub>36</sub>(Z<sub>2</sub>) = </span>
+                    {% elif loop.index == 37 %}
+                        <span>f<sub>37</sub>(Z<sub>5</sub>) = </span>
+                    {% elif loop.index == 38 %}
+                        <span>f<sub>38</sub>(Z<sub>10</sub>) = </span>
+                    {% elif loop.index == 39 %}
+                        <span>f<sub>39</sub>(Z<sub>2</sub>) = </span>
+                    {% elif loop.index == 40 %}
+                        <span>f<sub>40</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 41 %}
+                        <span>f<sub>41</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 42 %}
+                        <span>f<sub>42</sub>(Z<sub>12</sub>) = </span>
+                    {% elif loop.index == 43 %}
+                        <span>f<sub>43</sub>(Z<sub>14</sub>) = </span>
+                    {% elif loop.index == 44 %}
+                        <span>f<sub>44</sub>(Z<sub>3</sub>) = </span>
+                    {% elif loop.index == 45 %}
+                        <span>f<sub>45</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 46 %}
+                        <span>f<sub>46</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 47 %}
+                        <span>f<sub>47</sub>(Z<sub>4</sub>) = </span>
+                    {% elif loop.index == 48 %}
+                        <span>f<sub>48</sub>(Z<sub>13</sub>) = </span>
+                    {% elif loop.index == 49 %}
+                        <span>f<sub>49</sub>(Z<sub>6</sub>) = </span>
+                    {% elif loop.index == 50 %}
+                        <span>f<sub>50</sub>(Z<sub>8</sub>) = </span>
+                    {% elif loop.index == 51 %}
+                        <span>f<sub>51</sub>(Z<sub>13</sub>) = </span>
+                    {% elif loop.index == 52 %}
+                        <span>f<sub>52</sub>(Z<sub>1</sub>) = </span>
+                    {% elif loop.index == 53 %}
+                        <span>f<sub>53</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 54 %}
+                        <span>f<sub>54</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 55 %}
+                        <span>f<sub>55</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 56 %}
+                        <span>f<sub>56</sub>(Z<sub>3</sub>) = </span>
+                    {% elif loop.index == 57 %}
+                        <span>f<sub>57</sub>(Z<sub>9</sub>) = </span>
+                    {% elif loop.index == 58 %}
+                        <span>f<sub>58</sub>(Z<sub>1</sub>) = </span>
+                    {% elif loop.index == 59 %}
+                        <span>f<sub>59</sub>(Z<sub>3</sub>) = </span>
+                    {% elif loop.index == 60 %}
+                        <span>f<sub>60</sub>(Z<sub>5</sub>) = </span>
+                    {% elif loop.index == 61 %}
+                        <span>f<sub>61</sub>(Z<sub>8</sub>) = </span>
+                    {% elif loop.index == 62 %}
+                        <span>f<sub>62</sub>(Z<sub>11</sub>) = </span>
+                    {% elif loop.index == 63 %}
+                        <span>f<sub>63</sub>(Z<sub>12</sub>) = </span>
+                    {% elif loop.index == 64 %}
+                        <span>f<sub>64</sub>(Z<sub>13</sub>) = </span>
+                    {% elif loop.index == 65 %}
+                        <span>f<sub>65</sub>(Z<sub>7</sub>) = </span>
+                    {% elif loop.index == 66 %}
+                        <span>f<sub>66</sub>(Z<sub>9</sub>) = </span>
+                    {% else %}
+                        <span>f<sub>{{ loop.index }}</sub>(Z) = </span>
+                    {% endif %}
+
+                    <!-- Поля ввода и степени -->
+                    <input class="equation-input" id="equations-{{ loop.index }}-1" type="text" placeholder="a" />
+                    {% if loop.index == 1 %}
+                        <span>Z<sub>2</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 2 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 3 %}
+                        <span>Z<sub>14</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 4 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 5 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 6 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 7 %}
+                        <span>Z<sub>1</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 8 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 9 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 10 %}
+                        <span>Z<sub>2</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 11 %}
+                        <span>Z<sub>10</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 12 %}
+                        <span>Z<sub>1</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 13 %}
+                        <span>Z<sub>3</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 14 %}
+                        <span>Z<sub>5</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 15 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 16 %}
+                        <span>Z<sub>14</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 17 %}
+                        <span>Z<sub>6</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 18 %}
+                        <span>Z<sub>8</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 19 %}
+                        <span>Z<sub>12</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 20 %}
+                        <span>Z<sub>2</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 21 %}
+                        <span>Z<sub>12</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 22 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 23 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 24 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 25 %}
+                        <span>Z<sub>13</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 26 %}
+                        <span>Z<sub>10</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 27 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 28 %}
+                        <span>Z<sub>12</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 29 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 30 %}
+                        <span>Z<sub>6</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 31 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 32 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 33 %}
+                        <span>Z<sub>10</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 34 %}
+                        <span>Z<sub>13</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 35 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 36 %}
+                        <span>Z<sub>2</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 37 %}
+                        <span>Z<sub>5</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 38 %}
+                        <span>Z<sub>10</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 39 %}
+                        <span>Z<sub>2</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 40 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 41 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 42 %}
+                        <span>Z<sub>12</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 43 %}
+                        <span>Z<sub>14</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 44 %}
+                        <span>Z<sub>3</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 45 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 46 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 47 %}
+                        <span>Z<sub>4</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 48 %}
+                        <span>Z<sub>13</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 49 %}
+                        <span>Z<sub>6</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 50 %}
+                        <span>Z<sub>8</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 51 %}
+                        <span>Z<sub>13</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 52 %}
+                        <span>Z<sub>1</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 53 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 54 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 55 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 56 %}
+                        <span>Z<sub>3</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 57 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 58 %}
+                        <span>Z<sub>1</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 59 %}
+                        <span>Z<sub>3</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 60 %}
+                        <span>Z<sub>5</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 61 %}
+                        <span>Z<sub>8</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 62 %}
+                        <span>Z<sub>11</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 63 %}
+                        <span>Z<sub>12</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 64 %}
+                        <span>Z<sub>13</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 65 %}
+                        <span>Z<sub>7</sub><sup>4</sup> + </span>
+                    {% elif loop.index == 66 %}
+                        <span>Z<sub>9</sub><sup>4</sup> + </span>
+                    {% else %}
+                        <span>Z<sup>4</sup> + </span>
+                    {% endif %}
+
+                    <input class="equation-input" id="equations-{{ loop.index }}-2" type="text" placeholder="b" />
+                    {% if loop.index == 1 %}
+                        <span>Z<sub>2</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 2 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 3 %}
+                        <span>Z<sub>14</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 4 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 5 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 6 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 7 %}
+                        <span>Z<sub>1</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 8 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 9 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 10 %}
+                        <span>Z<sub>2</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 11 %}
+                        <span>Z<sub>10</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 12 %}
+                        <span>Z<sub>1</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 13 %}
+                        <span>Z<sub>3</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 14 %}
+                        <span>Z<sub>5</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 15 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 16 %}
+                        <span>Z<sub>14</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 17 %}
+                        <span>Z<sub>6</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 18 %}
+                        <span>Z<sub>8</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 19 %}
+                        <span>Z<sub>12</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 20 %}
+                        <span>Z<sub>2</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 21 %}
+                        <span>Z<sub>12</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 22 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 23 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 24 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 25 %}
+                        <span>Z<sub>13</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 26 %}
+                        <span>Z<sub>10</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 27 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 28 %}
+                        <span>Z<sub>12</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 29 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 30 %}
+                        <span>Z<sub>6</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 31 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 32 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 33 %}
+                        <span>Z<sub>10</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 34 %}
+                        <span>Z<sub>13</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 35 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 36 %}
+                        <span>Z<sub>2</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 37 %}
+                        <span>Z<sub>5</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 38 %}
+                        <span>Z<sub>10</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 39 %}
+                        <span>Z<sub>2</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 40 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 41 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 42 %}
+                        <span>Z<sub>12</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 43 %}
+                        <span>Z<sub>14</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 44 %}
+                        <span>Z<sub>3</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 45 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 46 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 47 %}
+                        <span>Z<sub>4</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 48 %}
+                        <span>Z<sub>13</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 49 %}
+                        <span>Z<sub>6</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 50 %}
+                        <span>Z<sub>8</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 51 %}
+                        <span>Z<sub>13</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 52 %}
+                        <span>Z<sub>1</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 53 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 54 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 55 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 56 %}
+                        <span>Z<sub>3</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 57 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 58 %}
+                        <span>Z<sub>1</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 59 %}
+                        <span>Z<sub>3</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 60 %}
+                        <span>Z<sub>5</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 61 %}
+                        <span>Z<sub>8</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 62 %}
+                        <span>Z<sub>11</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 63 %}
+                        <span>Z<sub>12</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 64 %}
+                        <span>Z<sub>13</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 65 %}
+                        <span>Z<sub>7</sub><sup>3</sup> + </span>
+                    {% elif loop.index == 66 %}
+                        <span>Z<sub>9</sub><sup>3</sup> + </span>
+                    {% else %}
+                        <span>Z<sup>3</sup> + </span>
+                    {% endif %}
+
+                    <input class="equation-input" id="equations-{{ loop.index }}-3" type="text" placeholder="c" />
+                    {% if loop.index == 1 %}
+                        <span>Z<sub>2</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 2 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 3 %}
+                        <span>Z<sub>14</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 4 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 5 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 6 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 7 %}
+                        <span>Z<sub>1</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 8 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 9 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 10 %}
+                        <span>Z<sub>2</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 11 %}
+                        <span>Z<sub>10</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 12 %}
+                        <span>Z<sub>1</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 13 %}
+                        <span>Z<sub>3</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 14 %}
+                        <span>Z<sub>5</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 15 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 16 %}
+                        <span>Z<sub>14</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 17 %}
+                        <span>Z<sub>6</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 18 %}
+                        <span>Z<sub>8</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 19 %}
+                        <span>Z<sub>12</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 20 %}
+                        <span>Z<sub>2</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 21 %}
+                        <span>Z<sub>12</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 22 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 23 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 24 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 25 %}
+                        <span>Z<sub>13</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 26 %}
+                        <span>Z<sub>10</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 27 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 28 %}
+                        <span>Z<sub>12</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 29 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 30 %}
+                        <span>Z<sub>6</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 31 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 32 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 33 %}
+                        <span>Z<sub>10</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 34 %}
+                        <span>Z<sub>13</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 35 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 36 %}
+                        <span>Z<sub>2</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 37 %}
+                        <span>Z<sub>5</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 38 %}
+                        <span>Z<sub>10</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 39 %}
+                        <span>Z<sub>2</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 40 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 41 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 42 %}
+                        <span>Z<sub>12</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 43 %}
+                        <span>Z<sub>14</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 44 %}
+                        <span>Z<sub>3</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 45 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 46 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 47 %}
+                        <span>Z<sub>4</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 48 %}
+                        <span>Z<sub>13</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 49 %}
+                        <span>Z<sub>6</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 50 %}
+                        <span>Z<sub>8</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 51 %}
+                        <span>Z<sub>13</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 52 %}
+                        <span>Z<sub>1</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 53 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 54 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 55 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 56 %}
+                        <span>Z<sub>3</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 57 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 58 %}
+                        <span>Z<sub>1</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 59 %}
+                        <span>Z<sub>3</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 60 %}
+                        <span>Z<sub>5</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 61 %}
+                        <span>Z<sub>8</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 62 %}
+                        <span>Z<sub>11</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 63 %}
+                        <span>Z<sub>12</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 64 %}
+                        <span>Z<sub>13</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 65 %}
+                        <span>Z<sub>7</sub><sup>2</sup> + </span>
+                    {% elif loop.index == 66 %}
+                        <span>Z<sub>9</sub><sup>2</sup> + </span>
+                    {% else %}
+                        <span>Z<sup>2</sup> + </span>
+                    {% endif %}
+
+                    <input class="equation-input" id="equations-{{ loop.index }}-4" type="text" placeholder="d" />
+                    {% if loop.index == 1 %}
+                        <span>Z<sub>2</sub> + </span>
+                    {% elif loop.index == 2 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 3 %}
+                        <span>Z<sub>14</sub> + </span>
+                    {% elif loop.index == 4 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 5 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 6 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 7 %}
+                        <span>Z<sub>1</sub> + </span>
+                    {% elif loop.index == 8 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 9 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 10 %}
+                        <span>Z<sub>2</sub> + </span>
+                    {% elif loop.index == 11 %}
+                        <span>Z<sub>10</sub> + </span>
+                    {% elif loop.index == 12 %}
+                        <span>Z<sub>1</sub> + </span>
+                    {% elif loop.index == 13 %}
+                        <span>Z<sub>3</sub> + </span>
+                    {% elif loop.index == 14 %}
+                        <span>Z<sub>5</sub> + </span>
+                    {% elif loop.index == 15 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 16 %}
+                        <span>Z<sub>14</sub> + </span>
+                    {% elif loop.index == 17 %}
+                        <span>Z<sub>6</sub> + </span>
+                    {% elif loop.index == 18 %}
+                        <span>Z<sub>8</sub> + </span>
+                    {% elif loop.index == 19 %}
+                        <span>Z<sub>12</sub> + </span>
+                    {% elif loop.index == 20 %}
+                        <span>Z<sub>2</sub> + </span>
+                    {% elif loop.index == 21 %}
+                        <span>Z<sub>12</sub> + </span>
+                    {% elif loop.index == 22 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 23 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 24 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 25 %}
+                        <span>Z<sub>13</sub> + </span>
+                    {% elif loop.index == 26 %}
+                        <span>Z<sub>10</sub> + </span>
+                    {% elif loop.index == 27 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 28 %}
+                        <span>Z<sub>12</sub> + </span>
+                    {% elif loop.index == 29 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 30 %}
+                        <span>Z<sub>6</sub> + </span>
+                    {% elif loop.index == 31 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 32 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 33 %}
+                        <span>Z<sub>10</sub> + </span>
+                    {% elif loop.index == 34 %}
+                        <span>Z<sub>13</sub> + </span>
+                    {% elif loop.index == 35 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 36 %}
+                        <span>Z<sub>2</sub> + </span>
+                    {% elif loop.index == 37 %}
+                        <span>Z<sub>5</sub> + </span>
+                    {% elif loop.index == 38 %}
+                        <span>Z<sub>10</sub> + </span>
+                    {% elif loop.index == 39 %}
+                        <span>Z<sub>2</sub> + </span>
+                    {% elif loop.index == 40 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 41 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 42 %}
+                        <span>Z<sub>12</sub> + </span>
+                    {% elif loop.index == 43 %}
+                        <span>Z<sub>14</sub> + </span>
+                    {% elif loop.index == 44 %}
+                        <span>Z<sub>3</sub> + </span>
+                    {% elif loop.index == 45 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 46 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 47 %}
+                        <span>Z<sub>4</sub> + </span>
+                    {% elif loop.index == 48 %}
+                        <span>Z<sub>13</sub> + </span>
+                    {% elif loop.index == 49 %}
+                        <span>Z<sub>6</sub> + </span>
+                    {% elif loop.index == 50 %}
+                        <span>Z<sub>8</sub> + </span>
+                    {% elif loop.index == 51 %}
+                        <span>Z<sub>13</sub> + </span>
+                    {% elif loop.index == 52 %}
+                        <span>Z<sub>1</sub> + </span>
+                    {% elif loop.index == 53 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 54 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 55 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 56 %}
+                        <span>Z<sub>3</sub> + </span>
+                    {% elif loop.index == 57 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% elif loop.index == 58 %}
+                        <span>Z<sub>1</sub> + </span>
+                    {% elif loop.index == 59 %}
+                        <span>Z<sub>3</sub> + </span>
+                    {% elif loop.index == 60 %}
+                        <span>Z<sub>5</sub> + </span>
+                    {% elif loop.index == 61 %}
+                        <span>Z<sub>8</sub> + </span>
+                    {% elif loop.index == 62 %}
+                        <span>Z<sub>11</sub> + </span>
+                    {% elif loop.index == 63 %}
+                        <span>Z<sub>12</sub> + </span>
+                    {% elif loop.index == 64 %}
+                        <span>Z<sub>13</sub> + </span>
+                    {% elif loop.index == 65 %}
+                        <span>Z<sub>7</sub> + </span>
+                    {% elif loop.index == 66 %}
+                        <span>Z<sub>9</sub> + </span>
+                    {% else %}
+                        <span>Z + </span>
+                    {% endif %}
+
+                    <input class="equation-input" id="equations-{{ loop.index }}-5" type="text" placeholder="e" />
                 </div>
+                {% endfor %}
             </div>
         </div>
-        <!-- Блок управления под начальными условиями -->
-        <div class="control-row">
-            <div class="control-section">
-                <div class="control-panel">
-                    <h5>Управление расчетами</h5>
-                    <div class="control-buttons">
-                        <span>Статус:</span>
-                        <input type="text" readonly id="status-input">
-                        <button onclick="process()">Вычислить</button>
-                        <button onclick="refill()">Обновить значения</button>
+    </div>
+
+    <!-- Компактные начальные условия (только первые 12) -->
+    <div class="compact-initial-container">
+        <h5>Начальные условия</h5>
+        <div class="compact-initial-header">
+            <div class="label-col">Переменная</div>
+            <div class="value-col">Начальное значение</div>
+            <div class="limit-col">Предел</div>
+        </div>
+
+        {% for i in range(1,13) %} <!-- Изменено на 13, чтобы получить 1..12 -->
+        <div class="compact-initial-row">
+            <div class="label-col">
+                <span>X{{ i }}</span>
+                <span class="param-label">{{ initial_equations[i-1] if initial_equations and i-1 < initial_equations|length else '' }}</span>
+            </div>
+            <div class="value-col">
+                <input name="u{{ i }}"
+                       id="init-eq-{{ i }}"
+                       value="{{ (values.u[i-1] if values and values.u and i-1 < values.u|length else '0.0') }}"
+                       maxlength="4"
+                       placeholder="" />
+            </div>
+            <div class="limit-col">
+                <input name="u_restrictions{{ i }}"
+                       id="restrictions-{{ i }}"
+                       value="{{ (values.u_restrictions[i-1] if values and values.u_restrictions and i-1 < values.u_restrictions|length else '1.0') }}"
+                       maxlength="4"
+                       placeholder="" />
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Блок управления расчетами -->
+    <div class="control-row">
+        <div class="control-section">
+            <h5>Управление расчетами</h5>
+            <div class="control-panel-light">
+                <div class="status-line">
+                    <span>Статус:</span>
+                    <input type="text" readonly id="status-input" placeholder="Готов" />
+                    <div class="button-group">
+                        <button class="btn-calculate" onclick="process()">Вычислить</button>
+                        <button class="btn-refresh" onclick="refill()">Обновить</button>
                     </div>
                 </div>
             </div>
