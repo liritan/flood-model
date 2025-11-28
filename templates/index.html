@@ -6,7 +6,6 @@
     <title>Параметры системы</title>
     <link href="/static/css/style.css" rel="stylesheet" />
     <style>
-        /* Дополнительные стили для нового макета */
         .top-row {
             display: flex;
             gap: 10px;
@@ -16,7 +15,7 @@
         .half-width-col {
             width: calc(50% - 5px);
             display: flex;
-            flex-direction: column; /* Колонка внутри колонки */
+            flex-direction: column; 
             height:800px;
         }
 
@@ -71,12 +70,11 @@
             text-align: left;
             padding-left: 10px;
         }
-        /* Стили для контейнера уравнений с прокруткой */
+
         .equations-container {
-            /* Занимает всё доступное пространство внутри half-width-col */
             flex: 1;
-            overflow-y: auto; /* Вертикальная прокрутка */
-            overflow-x: auto; /* Горизонтальная прокрутка для длинных уравнений */
+            overflow-y: auto;
+            overflow-x: auto; 
             padding: 5px;
             border: 1px solid #ccc;
             background-color: #fff;
@@ -223,11 +221,9 @@
 </header>
 <div class="all">
 <div class="container">
-    <!-- Первая строка: Характеристики и Уравнения -->
     <div class="top-row">
-        <!-- Характеристики (левый блок) -->
         <div class="half-width-col">
-            <h5>Характеристики системы</h5>
+            <h5>Возмущения</h5>
             <div class="characteristics-container">
                 {% for x in faks %}
                 <div class="block-function">
@@ -244,13 +240,11 @@
             </div>
         </div>
 
-        <!-- Уравнения (правый блок) -->
         <div class="half-width-col">
-            <h5>Уравнения системы</h5>
+            <h5>Внутренние функции модели</h5>
             <div class="equations-container">
                 {% for x in equations %}
                 <div class="block-function">
-                    <!-- Название -->
                     {% if loop.index == 1 %}
                         <span>f<sub>1</sub>(Z<sub>2</sub>) = </span>
                     {% elif loop.index == 2 %}
@@ -387,7 +381,6 @@
                         <span>f<sub>{{ loop.index }}</sub>(Z) = </span>
                     {% endif %}
 
-                    <!-- Поля ввода и степени -->
                     <input class="equation-input" id="equations-{{ loop.index }}-1" type="text" placeholder="a" />
                     {% if loop.index == 1 %}
                         <span>Z<sub>2</sub><sup>4</sup> + </span>
@@ -943,16 +936,15 @@
         </div>
     </div>
 
-    <!-- Компактные начальные условия (только первые 12) -->
     <div class="compact-initial-container">
         <h5>Начальные условия</h5>
         <div class="compact-initial-header">
-            <div class="label-col">Переменная</div>
-            <div class="value-col">Начальное значение</div>
+            <div class="label-col">Характеристика</div>
+            <div class="value-col">Начальное условие</div>
             <div class="limit-col">Предел</div>
         </div>
 
-        {% for i in range(1,13) %} <!-- Изменено на 13, чтобы получить 1..12 -->
+        {% for i in range(1,13) %}
         <div class="compact-initial-row">
             <div class="label-col">
                 <span>X{{ i }}</span>
@@ -976,7 +968,6 @@
         {% endfor %}
     </div>
 
-    <!-- Блок управления расчетами -->
     <div class="control-row">
         <div class="control-section">
             <h5>Управление расчетами</h5>

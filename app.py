@@ -7,7 +7,6 @@ from process import process, u_list
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
-# Создаем папки для изображений если их нет
 os.makedirs('static/images', exist_ok=True)
 
 @app.route('/')
@@ -47,5 +46,4 @@ def get_disturbances():
     return render_template('facks.html')
 
 if __name__ == '__main__':
-    # For local testing only; on PythonAnywhere, WSGI will import app
     app.run(host='0.0.0.0', port=5000, debug=True)

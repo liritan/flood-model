@@ -1,4 +1,9 @@
+import numpy as np
+
 def pend(x, t, faks, f, xm):
+    eps = 1e-4
+    x_safe = np.clip(x, eps, 1.0)
+    
     S = lambda: f3(t, faks[0])
     F = lambda: f3(t, faks[1])
     G = lambda: f3(t, faks[2])
@@ -10,69 +15,27 @@ def pend(x, t, faks, f, xm):
     C = faks[8][3]
 
     dkdt = [
-        # 0
-        (
-                (1 / xm[0]) * f3(S(), f[0]) * f0x8(x, f[1])
-        ),
-
-        # 1
-        (
-                (1 / xm[1]) * F() * G() * f3(S(), f[2]) * f0x8(x, f[3]) - f0x1(x, f[4]) * f0x7(x, f[5])
-        ),
-
-        # 2
-        (
-                (1 / xm[2]) * f0x8(x, f[6]) * f0x1(x, f[7])
-        ),
-
-        # 3
-        (
-                (1 / xm[3]) * F() * G() * T() * f0x8(x, f[8]) * f0x7(x, f[9]) * f0x1(x, f[10])
-        ),
-
-        # 4
-        (
-                (1 / xm[4]) * A() * f3(S(), f[11]) - f0x1(x, f[12]) * f0x7(x, f[13])
-        ),
-
-        # 5
-        (
-                (1 / xm[5]) * f3(S(), f[14]) * f0x8(x, f[15])
-        ),
-
-        # 6
-        (
-                (1 / xm[6]) * f0x1(x, f[16])
-        ),
-
-        # 7
-        (
-                (1 / xm[7]) * D() * f3(S(), f[17]) - f0x4(x, f[18])
-        ),
-
-        # 8
-        (
-                (1 / xm[8]) * I() * f3(S(), f[19]) - f0x1(x, f[20]) * f0x7(x, f[21])
-        ),
-
-        # 9
-        (
-                (1 / xm[9]) * F() * G() * T() * f3(S(), f[22]) * f0x1(x, f[23]) * f0x7(x, f[24])
-        ),
-
-        # 10
-        (
-                (1 / xm[10]) * P * C * F() * G() * D() * f3(S(), f[25]) * f0x6(x, f[26])
-        ),
-
-        # 11
-        (
-                (1 * xm[11]) * f0x11(x, f[27])
-        )
+        (1 / xm[0]) * f3(S(), f[0]) * f0x8(x_safe, f[1]) * (1 - x_safe[0]),
+        (1 / xm[1]) * F() * G() * f3(S(), f[2]) * f0x8(x_safe, f[3]) * (1 - x_safe[1]) - f0x1(x_safe, f[4]) * f0x7(x_safe, f[5]),
+        (1 / xm[2]) * f0x8(x_safe, f[6]) * f0x1(x_safe, f[7]) * (1 - x_safe[2]),
+        (1 / xm[3]) * F() * G() * T() * f0x8(x_safe, f[8]) * f0x7(x_safe, f[9]) * f0x1(x_safe, f[10]) * (1 - x_safe[3]),
+        (1 / xm[4]) * A() * f3(S(), f[11]) * (1 - x_safe[4]) - f0x1(x_safe, f[12]) * f0x7(x_safe, f[13]),
+        (1 / xm[5]) * f3(S(), f[14]) * f0x8(x_safe, f[15]) * (1 - x_safe[5]),
+        (1 / xm[6]) * f0x1(x_safe, f[16]) * (1 - x_safe[6]),
+        (1 / xm[7]) * D() * f3(S(), f[17]) * (1 - x_safe[7]) - f0x4(x_safe, f[18]),
+        (1 / xm[8]) * I() * f3(S(), f[19]) * (1 - x_safe[8]) - f0x1(x_safe, f[20]) * f0x7(x_safe, f[21]),
+        (1 / xm[9]) * F() * G() * T() * f3(S(), f[22]) * f0x1(x_safe, f[23]) * f0x7(x_safe, f[24]) * (1 - x_safe[9]),
+        (1 / xm[10]) * P * C * F() * G() * D() * f3(S(), f[25]) * f0x6(x_safe, f[26]) * (1 - x_safe[10]),
+        (1 * xm[11]) * f0x11(x_safe, f[27]) * (1 - x_safe[11])
     ]
+    
+    for i in range(len(dkdt)):
+        if x[i] <= eps and dkdt[i] < 0:
+            dkdt[i] = 0.0
+        if x[i] >= 0.999 and dkdt[i] > 0:
+            dkdt[i] = 0.0
+
     return dkdt
-
-
 def fx(x, params):
     return params[0] * x ** 4 + params[1] * x ** 3 + params[2] * x ** 2 + params[3] * x + params[4]
 
@@ -160,48 +123,37 @@ def x12(t):
 
 
 def fx1(t):
-    return 0.001 * t ** 3 + 0.0665 * t ** 2 - 0.0345 * t - 0.008
-
+    return np.clip(0.3 + 0.2 * t, 0.3, 0.8)
 
 def fx2(t):
-    return -0.0536 * t ** 3 + 0.4455 * t ** 2 - 0.786 * t + 0.447
-
+    return np.clip(0.4 - 0.1 * t, 0.3, 0.7)
 
 def fx3(t):
-    return -0.011 * t ** 3 + 0.151 * t ** 2 - 0.14 * t + 0.25
-
+    return np.clip(0.5 - 0.15 * t, 0.35, 0.8)
 
 def fx4(t):
-    return 0.0923 * t ** 3 - 0.859 * t ** 2 + 2.6156 * t - 1.849
-
+    return np.clip(0.2 + 0.3 * t, 0.2, 0.7)
 
 def fx5(t):
-    return -0.04 * t ** 3 + 0.288 * t ** 2 - 0.187 * t + 0.239
-
+    return np.clip(0.6 - 0.2 * t, 0.4, 0.8)
 
 def fx6(t):
-    return -0.0063 * t ** 3 + 0.104 * t ** 2 + 0.107 * t + 0.045
-
+    return np.clip(0.4 + 0.25 * t, 0.4, 0.8)
 
 def fx7(t):
-    return 0.03 * t ** 3 - 0.032 * t ** 2 + 0.01 * t + 0.023
-
+    return np.clip(0.5 - 0.1 * t, 0.4, 0.8)
 
 def fx8(t):
-    return 0.0132 * t ** 3 - 0.0245 * t ** 2 + 0.245 * t - 0.067
-
+    return np.clip(0.3 + 0.3 * t, 0.3, 0.8)
 
 def fx9(t):
-    return -0.009 * t ** 3 + 0.1115 * t ** 2 - 0.06 * t - 0.038
-
+    return np.clip(0.4 - 0.05 * t, 0.35, 0.7)
 
 def fx10(t):
-    return 0.16 * t ** 3 - 1.5 * t ** 2 + 4.57 * t - 3.23
-
+    return np.clip(0.2 + 0.4 * t, 0.2, 0.8)
 
 def fx11(t):
-    return 0.004 * t ** 3 + 0.01 * t ** 2 + 0.21 * t - 0.22
-
+    return np.clip(0.5 - 0.15 * t, 0.35, 0.8)
 
 def fx12(t):
-    return 0.034 * t ** 3 - 0.127 * t ** 2 + 0.24 * t
+    return np.clip(0.3 + 0.35 * t, 0.3, 0.8)
