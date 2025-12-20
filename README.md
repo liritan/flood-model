@@ -2,12 +2,12 @@
 
 Лабораторная работа №2 по предмету "Теория информационных процессов и систем"
 
-Для запуска калькулятора необходимо распаковать архив, открыть его в Visual Studio Code и поочередно написать следующие команды: 
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python app.py
+Для запуска калькулятора необходимо распаковать архив, открыть его в Visual Studio Code и поочередно написать следующие команды:   
+python -m venv .venv  
+.\.venv\Scripts\Activate.ps1  
+python -m pip install --upgrade pip  
+pip install -r requirements.txt  
+python app.py  
 
  Ссылка на проект
 
