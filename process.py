@@ -86,19 +86,17 @@ def create_graphic(t, data):
         "X12 - Ущерб оборотным фондам"
     ]
     
-    line_labels = ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12"]
-    
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
               '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#ff1493', '#00ced1']
     
     for i in range(6):
         y_data = np.clip(data[:, i], 0, 1.0)
-        line = ax1.plot(t, y_data, color=colors[i], linewidth=2.5, label=labels[i])
+        ax1.plot(t, y_data, color=colors[i], linewidth=2.5, label=labels[i])
         
         mid_idx = len(t) // 2
         if mid_idx > 0:
-            ax1.text(t[mid_idx], y_data[mid_idx], f' {line_labels[i]}', 
-                    color=colors[i], fontsize=9, va='center', ha='left',
+            ax1.text(t[mid_idx], y_data[mid_idx], f' X{i+1}', 
+                    color='black', fontsize=12, va='center', ha='left',
                     bbox=dict(boxstyle="round,pad=0.1", facecolor='white', alpha=0.7, edgecolor='none'))
     
     ax1.set_xlim([0, 1])
@@ -109,17 +107,16 @@ def create_graphic(t, data):
                edgecolor='gray', fancybox=True)
     ax1.grid(True, alpha=0.3, linestyle='--')
     ax1.tick_params(axis='both', which='major', labelsize=12)
-    
-    ax1.axhline(y=1.0, color='red', linestyle=':', alpha=0.7, linewidth=1, label='Предел')
+    ax1.axhline(y=1.0, color='red', linestyle=':', alpha=0.7, linewidth=1)
     
     for i in range(6, 12):
         y_data = np.clip(data[:, i], 0, 1.0)
-        line = ax2.plot(t, y_data, color=colors[i], linewidth=2.5, label=labels[i])
+        ax2.plot(t, y_data, color=colors[i], linewidth=2.5, label=labels[i])
         
         mid_idx = len(t) // 2
         if mid_idx > 0:
-            ax2.text(t[mid_idx], y_data[mid_idx], f' {line_labels[i]}', 
-                    color=colors[i], fontsize=9, va='center', ha='left',
+            ax2.text(t[mid_idx], y_data[mid_idx], f' X{i+1}', 
+                    color='black', fontsize=12, va='center', ha='left',
                     bbox=dict(boxstyle="round,pad=0.1", facecolor='white', alpha=0.7, edgecolor='none'))
     
     ax2.set_xlim([0, 1])
@@ -131,13 +128,11 @@ def create_graphic(t, data):
                edgecolor='gray', fancybox=True)
     ax2.grid(True, alpha=0.3, linestyle='--')
     ax2.tick_params(axis='both', which='major', labelsize=12)
-    
-    ax2.axhline(y=1.0, color='red', linestyle=':', alpha=0.7, linewidth=1, label='Предел')
+    ax2.axhline(y=1.0, color='red', linestyle=':', alpha=0.7, linewidth=1)
     
     plt.tight_layout(pad=3.0)
     fig.savefig('./static/images/figure.png', bbox_inches='tight', dpi=150)
     plt.close(fig)
-
 
 def cast_to_float(initial_equations, faks, equations, restrictions):
     for i in range(len(initial_equations)):
@@ -227,7 +222,7 @@ def create_disturbances_graphic(t, faks):
         mid_idx = len(t) // 2
         if mid_idx > 0:
             axs.text(t[mid_idx], curve[mid_idx], f' {line_labels[i]}', 
-                    color=colors[i], fontsize=9, va='center', ha='left',
+                    color='black', fontsize=11, va='center', ha='left',
                     bbox=dict(boxstyle="round,pad=0.1", facecolor='white', alpha=0.7, edgecolor='none'))
     
     axs.set_xlim([0, 1])
